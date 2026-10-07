@@ -1,0 +1,54 @@
+.embroidery-options-fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-small);
+  margin-top: var(--spacing-small);
+  margin-bottom: var(--spacing-small);
+}
+
+.embroidery-options-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xxsmall);
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.embroidery-options-field label,
+.embroidery-options-field legend {
+  font-weight: var(--type-body-1-strong-font);
+  color: var(--color-neutral-800);
+  padding: 0;
+}
+
+.embroidery-options-field select,
+.embroidery-options-field input[type="text"] {
+  width: 100%;
+  max-width: 24rem;
+  padding: var(--spacing-xxsmall) var(--spacing-xsmall);
+  border: 1px solid var(--color-neutral-400);
+  border-radius: 4px;
+  background-color: var(--color-neutral-50);
+  color: var(--color-neutral-800);
+}
+
+.embroidery-options-field--radio {
+  gap: var(--spacing-xxsmall);
+}
+
+.embroidery-options-radio-option {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xxsmall);
+}
+
+.embroidery-options-radio-option label {
+  font-weight: normal;
+}
+
+@media (min-width: 900px) {
+  .embroidery-options-fields {
+    grid-column: 1 / span 4;
+  }
+}
