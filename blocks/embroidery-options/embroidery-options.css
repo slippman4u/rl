@@ -6,6 +6,13 @@
   margin-bottom: var(--spacing-small);
 }
 
+/* display: flex above is an author-stylesheet rule, so it beats the
+   browser's default [hidden] { display: none } (author origin always wins
+   over user-agent origin). This re-establishes the hide. */
+.embroidery-options-fields[hidden] {
+  display: none;
+}
+
 .embroidery-options-field {
   display: flex;
   flex-direction: column;
