@@ -1,0 +1,354 @@
+/* =============================================================
+   shop-the-look block
+   Two-panel "How To Wear It" layout — lifestyle image left,
+   2×2 product thumbnail grid right.
+   All rules scoped to .shop-the-look to avoid leaking styles.
+   ============================================================= */
+
+/* ---------------------------------------------------------------
+   Design tokens — override these to retheme the block
+   --------------------------------------------------------------- */
+.shop-the-look {
+  --stl-left-width: 42%;
+  --stl-right-width: 58%;
+  --stl-panel-gap: 0px;          /* gap between left and right panels */
+  --stl-grid-gap: 2px;           /* gap between thumbnail cells       */
+  --stl-heading-color: var(--color-neutral-900, #111);
+  --stl-thumb-bg: var(--color-neutral-100, #f4f4f4);
+  --stl-thumb-border: 1px solid var(--color-neutral-200, #e0e0e0);
+
+  /* Required so the popup can be absolutely positioned over thumbnails */
+  position: relative;
+}
+
+/* ---------------------------------------------------------------
+   Wrapper reset — remove EDS default max-width / padding
+   --------------------------------------------------------------- */
+.shop-the-look-wrapper,
+.shop-the-look-container {
+  max-width: unset;
+  padding: 0;
+}
+
+/* ---------------------------------------------------------------
+   Section heading — "How To Wear It"
+   --------------------------------------------------------------- */
+.shop-the-look .stl-heading {
+  font: var(--type-headline-2-strong-font, 700 1.75rem / 1.2 sans-serif);
+  letter-spacing: var(--type-headline-2-strong-letter-spacing, -0.01em);
+  color: var(--stl-heading-color);
+  text-align: center;
+  margin: 0;
+  padding: var(--spacing-xxbig, 3rem) var(--spacing-medium, 1rem)
+           var(--spacing-big, 2rem);
+}
+
+/* ---------------------------------------------------------------
+   Two-panel layout container
+   --------------------------------------------------------------- */
+.shop-the-look .stl-layout {
+  display: flex;
+  gap: var(--stl-panel-gap);
+  align-items: stretch; /* both panels stretch to the same height */
+}
+
+/* ---------------------------------------------------------------
+   LEFT panel — lifestyle / model image
+   --------------------------------------------------------------- */
+.shop-the-look .stl-lifestyle {
+  flex: 0 0 var(--stl-left-width);
+  max-width: var(--stl-left-width);
+  min-height: 500px;
+  overflow: hidden;
+  background: var(--stl-thumb-bg);
+}
+
+.shop-the-look .stl-lifestyle-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* picture wrapper returned by EDS image transforms */
+.shop-the-look .stl-lifestyle picture {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.shop-the-look .stl-lifestyle picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ---------------------------------------------------------------
+   RIGHT panel — always a 2×2 grid that matches the lifestyle panel height.
+   No explicit height: align-items:stretch on .stl-layout gives this item a
+   definite cross size equal to the lifestyle panel, which makes 1fr rows work.
+   --------------------------------------------------------------- */
+.shop-the-look .stl-grid {
+  flex: 0 0 var(--stl-right-width);
+  max-width: var(--stl-right-width);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr; /* two equal rows regardless of tile count */
+  gap: var(--stl-grid-gap);
+}
+
+/* Individual thumbnail cell — fills its grid row via default align-self:stretch */
+.shop-the-look .stl-grid-item {
+  position: relative;
+  overflow: hidden;
+  background: var(--stl-thumb-bg);
+  border: var(--stl-thumb-border);
+  box-sizing: border-box;
+}
+
+/* Absolutely positioned so it doesn't push the grid row taller than the lifestyle panel.
+   The grid row height comes entirely from align-items:stretch on the flex container. */
+.shop-the-look .stl-grid-btn {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  cursor: pointer;
+  line-height: 0;
+  overflow: hidden; /* clips the hover-zoom scale */
+}
+
+.shop-the-look .stl-grid-btn:focus-visible {
+  outline: 2px solid var(--color-brand-500, #111);
+  outline-offset: -2px;
+}
+
+.shop-the-look .stl-grid-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #f5f5f5;
+  display: block;
+  transition: transform 0.25s ease;
+}
+
+.shop-the-look .stl-grid-img--placeholder {
+  background: var(--color-neutral-200, #e0e0e0);
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Skeleton loading tile */
+.shop-the-look .stl-grid-skeleton {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    var(--color-neutral-200, #e8e8e8) 25%,
+    var(--color-neutral-100, #f4f4f4) 50%,
+    var(--color-neutral-200, #e8e8e8) 75%
+  );
+  background-size: 200% 100%;
+  animation: stl-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes stl-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+/* Error tile */
+.shop-the-look .stl-grid-error {
+  width: 100%;
+  height: 100%;
+  background: var(--color-neutral-100, #f4f4f4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: var(--type-details-caption-1-font, 0.75rem / 1.4 sans-serif);
+  color: var(--color-neutral-500, #888);
+  text-align: center;
+  padding: var(--spacing-small, 0.75rem);
+  box-sizing: border-box;
+}
+
+.shop-the-look .stl-grid-btn:hover .stl-grid-img {
+  transform: scale(1.04);
+}
+
+/* ---------------------------------------------------------------
+   Mobile  (< 768 px) — stack vertically
+   --------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .shop-the-look .stl-layout {
+    flex-direction: column;
+  }
+
+  .shop-the-look .stl-lifestyle,
+  .shop-the-look .stl-grid {
+    flex: none;
+    max-width: 100%;
+    width: 100%;
+  }
+
+  /* Give the lifestyle image a natural portrait crop on mobile */
+  .shop-the-look .stl-lifestyle-img,
+  .shop-the-look .stl-lifestyle picture img {
+    height: auto;
+    aspect-ratio: 4 / 3;
+  }
+
+  /* On mobile the grid stacks below the lifestyle image with no fixed reference
+     height. Grid items need an explicit aspect-ratio because the absolutely
+     positioned button contributes no in-flow height. */
+  .shop-the-look .stl-grid {
+    grid-template-rows: auto;
+  }
+
+  .shop-the-look .stl-grid-item {
+    aspect-ratio: 1 / 1;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Popup — caption overlay anchored to the bottom of the product tile.
+   The popup lives inside .stl-grid-item (position:relative) so
+   bottom/left/right pin it to the tile's bottom edge without
+   displacing any surrounding elements.
+   --------------------------------------------------------------- */
+.shop-the-look .stl-popup {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 20;
+  background: rgb(255 255 255 / 90%);
+  box-shadow: 0 -2px 12px rgb(0 0 0 / 10%);
+  padding: var(--spacing-medium, 1.25rem);
+  box-sizing: border-box;
+}
+
+/* Desktop: hide with display:none (no animation needed) */
+@media (min-width: 768px) {
+  .shop-the-look .stl-popup[hidden] {
+    display: none;
+  }
+}
+
+/* Close button — top-right corner */
+.shop-the-look .stl-popup-close {
+  position: absolute;
+  top: var(--spacing-xsmall, 0.5rem);
+  right: var(--spacing-xsmall, 0.5rem);
+  background: none;
+  border: none;
+  font-size: 1.25rem;
+  line-height: 1;
+  cursor: pointer;
+  color: var(--color-neutral-500, #888);
+  padding: 0.25rem;
+
+  /* 44×44 px minimum touch target */
+  min-width: 44px;
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+}
+
+.shop-the-look .stl-popup-close:hover {
+  color: var(--color-neutral-900, #111);
+}
+
+.shop-the-look .stl-popup-close:focus-visible {
+  outline: 2px solid var(--color-brand-500, #111);
+  outline-offset: 2px;
+}
+
+/* Product name — right margin keeps it clear of the close button */
+.shop-the-look .stl-popup-name {
+  font: var(--type-body-2-strong-font, 600 0.875rem / 1.4 sans-serif);
+  letter-spacing: var(--type-body-2-strong-letter-spacing, 0);
+  color: var(--color-neutral-900, #111);
+  margin: 0 1.75rem var(--spacing-xxsmall, 0.25rem) 0;
+}
+
+/* Product price */
+.shop-the-look .stl-popup-price {
+  font: var(--type-body-2-default-font, 0.875rem / 1.4 sans-serif);
+  letter-spacing: var(--type-body-2-default-letter-spacing, 0);
+  color: var(--color-neutral-700, #555);
+  margin: 0 0 var(--spacing-small, 0.75rem);
+}
+
+/* CTA button — 44 px minimum touch target */
+.shop-the-look .stl-popup-cta {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  background: var(--color-neutral-900, #111);
+  color: var(--color-neutral-50, #fff);
+  text-align: center;
+  padding: var(--spacing-xsmall, 0.5rem) var(--spacing-small, 0.75rem);
+  text-decoration: none;
+  font: var(--type-body-2-strong-font, 600 0.875rem / 1.4 sans-serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  transition: background 0.15s ease;
+}
+
+.shop-the-look .stl-popup-cta:hover {
+  background: var(--color-neutral-700, #333);
+}
+
+.shop-the-look .stl-popup-cta:focus-visible {
+  outline: 2px solid var(--color-brand-500, #111);
+  outline-offset: -2px;
+}
+
+/* Mobile: bottom sheet with slide-up animation */
+@media (max-width: 767px) {
+  /* Visible state — full-width bottom sheet */
+  .shop-the-look .stl-popup {
+    position: fixed;
+    inset: auto 0 0; /* top: auto, right: 0, bottom: 0, left: 0 */
+    transform: translateY(0);
+    background: rgb(255 255 255 / 97%);
+    border-radius: 12px 12px 0 0;
+    box-shadow: 0 -4px 24px rgb(0 0 0 / 18%);
+    padding: var(--spacing-medium, 1.25rem)
+             var(--spacing-medium, 1.25rem)
+             calc(var(--spacing-medium, 1.25rem) + env(safe-area-inset-bottom, 0px));
+
+    /* Slide-up transition */
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+                visibility 0s linear 0s;
+    visibility: visible;
+  }
+
+  /* Hidden state — slide off-screen instead of display:none so transition plays */
+  .shop-the-look .stl-popup[hidden] {
+    display: block;              /* override browser/CSS display:none */
+    transform: translateY(110%) !important;
+    visibility: hidden;
+    pointer-events: none;
+    transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1),
+                visibility 0s linear 0.35s; /* delay visibility until after slide */
+  }
+
+  /* Drag handle — purely decorative indicator bar */
+  .shop-the-look .stl-popup::before {
+    content: '';
+    display: block;
+    width: 36px;
+    height: 4px;
+    background: var(--color-neutral-300, #ccc);
+    border-radius: 2px;
+    margin: 0 auto var(--spacing-small, 0.75rem);
+  }
+}
