@@ -693,3 +693,8 @@ body.grid-pdp .hero-wrapper,
 body.grid-pdp .hero {
   margin-bottom: 0;
 }
+/* Collapse the empty two-column area above the grid */
+body.grid-pdp .product-details__wrapper,
+body.grid-pdp .product-details__alert {
+  display: none;
+}
