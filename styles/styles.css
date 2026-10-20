@@ -680,3 +680,16 @@ body.grid-pdp main h1 {
   font-size: 28px;
   margin: 24px 0 16px;
 }
+/* Tighten space between banner and grid */
+body.grid-pdp .product-details,
+body.grid-pdp .product-details__wrapper {
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  gap: 0;
+}
+
+body.grid-pdp .hero-wrapper,
+body.grid-pdp .hero {
+  margin-bottom: 0;
+}
