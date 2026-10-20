@@ -659,3 +659,18 @@ body.grid-pdp .hero img {
   height: 360px;
   object-fit: cover;
 }
+/* Hide the original PDP pieces we no longer want */
+body.grid-pdp .product-details__gallery,
+body.grid-pdp .product-details__header,
+body.grid-pdp .product-details__price,
+body.grid-pdp .product-details__short-description,
+body.grid-pdp .product-details__description,
+body.grid-pdp .product-details__attributes {
+  display: none;
+}
+
+/* Style the new title above the banner */
+body.grid-pdp main > .section:first-child h1 {
+  text-align: center;
+  margin: 24px auto;
+}
