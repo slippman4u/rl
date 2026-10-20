@@ -1,0 +1,9 @@
+.video {
+  max-width: 900px;
+  margin: 24px auto;
+}
+
+.video video {
+  display: block;
+  width: 100%;
+}
