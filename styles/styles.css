@@ -654,11 +654,16 @@ body.grid-pdp .product-details__buttons {
   display: none;
 }
 
+body.grid-pdp .hero {
+  min-height: 600px;
+}
+
 body.grid-pdp .hero img {
   width: 100%;
-  height: 360px;
+  height: 100%;
   object-fit: cover;
 }
+
 /* Hide the original PDP pieces we no longer want */
 body.grid-pdp .product-details__gallery,
 body.grid-pdp .product-details__header,
@@ -669,8 +674,9 @@ body.grid-pdp .product-details__attributes {
   display: none;
 }
 
-/* Style the new title above the banner */
-body.grid-pdp main > .section:first-child h1 {
-  text-align: center;
-  margin: 24px auto;
+/* Title below the banner, left-aligned */
+body.grid-pdp main h1 {
+  text-align: left;
+  font-size: 28px;
+  margin: 24px 0 16px;
 }
