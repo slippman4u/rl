@@ -669,7 +669,16 @@ body.grid-pdp main .section.product-details-container {
 }
 
 /* Product block pieces must not become the anchor, and must not add gaps */
-body.grid-pdp .product-details-wrapper,
+body.grid-pdp .product-details-wrapper {
+  position: static;
+  width: 100%;
+  max-width: 1200px;
+  margin-left: auto;
+  margin-right: auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
 body.grid-pdp .product-details {
   position: static;
 }
