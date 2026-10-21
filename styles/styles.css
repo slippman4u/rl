@@ -768,3 +768,7 @@ body.grid-pdp .pdp-header__sku {
     box-shadow: none;
   }
 }
+/* Hide the Image column in the quick-order grid on all PDPs */
+.product-details__grid-ordering table tr > :first-child {
+  display: none;
+}
