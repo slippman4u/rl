@@ -648,6 +648,7 @@ body.columns main > .section:empty {
 main[hidden] {
   display: none !important;
 }
+
 /* ===== grid-pdp: custom PDP ===== */
 
 /* Banner */
@@ -662,19 +663,28 @@ body.grid-pdp .hero img {
   object-fit: cover;
 }
 
-/* The section is the positioning anchor for the overlay */
+/* The section is the anchor for the overlay */
 body.grid-pdp main .section.product-details-container {
   position: relative;
 }
 
-/* Collapse the wrapper (no empty gap), hide gallery and alert */
+/* Product block pieces must not become the anchor, and must not add gaps */
+body.grid-pdp .product-details-wrapper,
+body.grid-pdp .product-details,
+body.grid-pdp .product-details__wrapper {
+  position: static;
+  margin: 0;
+  padding: 0;
+  min-height: 0;
+  gap: 0;
+}
+
 body.grid-pdp .product-details__wrapper {
   display: block;
   height: 0;
-  margin: 0;
-  padding: 0;
 }
 
+/* Hide gallery and alert */
 body.grid-pdp .product-details__left-column,
 body.grid-pdp .product-details__alert {
   display: none;
@@ -693,7 +703,7 @@ body.grid-pdp .product-details__right-column {
   box-shadow: 0 2px 12px rgb(0 0 0 / 15%);
 }
 
-/* Hide everything in the box except name and price */
+/* Show only name and price in the box */
 body.grid-pdp .product-details__right-column > * {
   display: none;
 }
@@ -703,7 +713,7 @@ body.grid-pdp .product-details__price {
   display: block;
 }
 
-body.grid-pdp .product-details__sku {
+body.grid-pdp .product-details__header > :not(h1) {
   display: none;
 }
 
@@ -713,18 +723,8 @@ body.grid-pdp .product-details__header h1 {
   line-height: 1.25;
   text-align: left;
 }
-/* Anchor the overlay to the section, not the product block */
-body.grid-pdp .product-details-wrapper,
-body.grid-pdp .product-details,
-body.grid-pdp .product-details__wrapper {
-  position: static;
-}
 
-/* Hide the SKU line under the title */
-body.grid-pdp .product-details__header > :not(h1) {
-  display: none;
-}
-/* Phones: put the box below the banner instead of over it */
+/* Phones: box goes below the banner */
 @media (width < 700px) {
   body.grid-pdp .product-details__wrapper {
     height: auto;
