@@ -730,7 +730,17 @@ body.grid-pdp .product-details__header h1 {
   line-height: 1.25;
   text-align: left;
 }
+body.grid-pdp .pdp-header__title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.25;
+  text-align: left;
+  color: #292929;
+}
 
+body.grid-pdp .pdp-header__sku {
+  display: none;
+}
 /* Phones: box goes below the banner */
 @media (width < 700px) {
   body.grid-pdp .product-details__wrapper {
