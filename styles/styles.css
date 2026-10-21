@@ -713,8 +713,15 @@ body.grid-pdp .product-details__price {
   display: block;
 }
 
-body.grid-pdp .product-details__header > :not(h1) {
+body.grid-pdp .product-details__header > :nth-child(n + 2) {
   display: none;
+}
+
+body.grid-pdp .product-details__header > :first-child {
+  margin: 0 0 8px;
+  font-size: 22px;
+  line-height: 1.25;
+  text-align: left;
 }
 
 body.grid-pdp .product-details__header h1 {
