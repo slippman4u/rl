@@ -670,7 +670,10 @@ body.grid-pdp main .section.product-details-container {
 
 /* Product block pieces must not become the anchor, and must not add gaps */
 body.grid-pdp .product-details-wrapper,
-body.grid-pdp .product-details,
+body.grid-pdp .product-details {
+  position: static;
+}
+
 body.grid-pdp .product-details__wrapper {
   position: static;
   margin: 0;
