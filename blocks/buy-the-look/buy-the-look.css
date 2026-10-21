@@ -1,0 +1,268 @@
+.buy-the-look {
+  --btl-navy: #0d1b3a;
+  --btl-tile: #f0efed;
+  --btl-serif: "Bodoni 72", didot, "Bodoni MT", baskerville, "Times New Roman", serif;
+  --btl-mono: ui-monospace, "SF Mono", menlo, consolas, monospace;
+
+  box-sizing: border-box;
+  padding: 32px;
+  background-color: #fff;
+  color: var(--btl-navy);
+}
+
+.buy-the-look .btl-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 8px 16px;
+  margin-bottom: 24px;
+}
+
+.buy-the-look .btl-title {
+  margin: 0;
+  font: 400 3.4rem/1.15 var(--btl-serif);
+  letter-spacing: 0;
+  color: var(--btl-navy);
+}
+
+.buy-the-look .btl-subtitle,
+.buy-the-look .btl-count {
+  margin: 4px 0 0;
+  font-size: 1.4rem;
+  line-height: 2rem;
+}
+
+.buy-the-look .btl-body {
+  display: grid;
+  grid-template-columns: minmax(0, 4fr) minmax(0, 6fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.buy-the-look .btl-body.btl-no-main {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.buy-the-look .btl-main {
+  aspect-ratio: 3 / 4;
+  overflow: hidden;
+  background-color: var(--btl-tile);
+}
+
+.buy-the-look .btl-main picture,
+.buy-the-look .btl-main img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.buy-the-look .btl-main img {
+  object-fit: cover;
+}
+
+.buy-the-look .btl-panel {
+  box-sizing: border-box;
+}
+
+.buy-the-look .btl-thumbs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #e5e3e0;
+}
+
+.buy-the-look .btl-thumb {
+  width: 76px;
+  padding: 0;
+  border: 2px solid transparent;
+  background: var(--btl-tile);
+  cursor: pointer;
+  aspect-ratio: 1;
+  overflow: hidden;
+}
+
+.buy-the-look .btl-thumb picture,
+.buy-the-look .btl-thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.buy-the-look .btl-thumb img {
+  object-fit: contain;
+}
+
+.buy-the-look .btl-thumb[aria-pressed="true"] {
+  border-color: var(--btl-navy);
+}
+
+.buy-the-look .btl-thumb:focus-visible,
+.buy-the-look .btl-heart:focus-visible,
+.buy-the-look .btl-add:focus-visible,
+.buy-the-look .btl-similar:focus-visible,
+.buy-the-look .btl-select:focus-visible {
+  outline: 2px solid var(--btl-navy);
+  outline-offset: 2px;
+}
+
+.buy-the-look .btl-product {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 24px;
+  padding-top: 24px;
+}
+
+.buy-the-look .btl-product[hidden] {
+  display: none;
+}
+
+.buy-the-look .btl-product-media {
+  position: relative;
+  aspect-ratio: 1;
+  overflow: hidden;
+  background-color: var(--btl-tile);
+}
+
+.buy-the-look .btl-product-media picture,
+.buy-the-look .btl-product-media img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.buy-the-look .btl-product-media img {
+  object-fit: contain;
+}
+
+.buy-the-look .btl-heart {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background-color: rgb(255 255 255 / 90%);
+  color: var(--btl-navy);
+  font-size: 2rem;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.buy-the-look .btl-product-info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.buy-the-look .btl-product-info p {
+  margin: 0;
+}
+
+.buy-the-look .btl-name {
+  font: 400 2.4rem/1.25 var(--btl-serif);
+}
+
+.buy-the-look .btl-price {
+  margin-top: 12px;
+  font-size: 1.6rem;
+  line-height: 2.4rem;
+}
+
+.buy-the-look .btl-color {
+  margin-top: 12px;
+  font-size: 1.4rem;
+}
+
+.buy-the-look .btl-label {
+  display: block;
+  margin-top: 16px;
+  font: 400 1.2rem/1.6rem var(--btl-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.buy-the-look .btl-color .btl-label {
+  display: inline;
+  margin-top: 0;
+}
+
+.buy-the-look .btl-select {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 280px;
+  margin-top: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--btl-navy);
+  border-radius: 0;
+  background-color: #fff;
+  color: var(--btl-navy);
+  font-size: 1.4rem;
+}
+
+.buy-the-look .btl-error {
+  margin-top: 6px;
+  color: #c35050;
+  font-size: 1.2rem;
+}
+
+.buy-the-look .btl-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  align-items: center;
+  margin-top: auto;
+  padding-top: 24px;
+}
+
+.buy-the-look .btl-add,
+.buy-the-look .btl-similar {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--btl-navy);
+  font: 400 1.3rem/1.6rem var(--btl-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.buy-the-look .btl-add:hover .btl-add-text,
+.buy-the-look .btl-similar:hover {
+  text-decoration: underline;
+}
+
+.buy-the-look .btl-add.is-added {
+  font-weight: 700;
+}
+
+.buy-the-look .btl-status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+@media (width < 700px) {
+  .buy-the-look {
+    padding: 16px;
+  }
+
+  .buy-the-look .btl-title {
+    font-size: 2.8rem;
+  }
+
+  .buy-the-look .btl-body,
+  .buy-the-look .btl-product {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
