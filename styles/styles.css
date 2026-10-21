@@ -773,3 +773,32 @@ body.grid-pdp .pdp-header__sku {
 .product-details__grid-ordering table tr > :first-child {
   display: none;
 }
+/* Announcement bar above the nav */
+.announcement-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 48px;
+  padding: 0 16px;
+  background-color: #04193a;
+  color: #fff;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.announcement-bar p {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.announcement-bar a:any-link {
+  color: #fff;
+  font: inherit;
+  text-decoration: underline;
+}
+
+header:has(.announcement-bar) {
+  height: calc(var(--nav-height) + 48px);
+}
