@@ -669,14 +669,15 @@ body.grid-pdp main .section.product-details-container {
 }
 
 /* Product block pieces must not become the anchor, and must not add gaps */
-body.grid-pdp .product-details-wrapper {
-  position: static;
-  width: 100%;
-  max-width: 1200px;
-  margin-left: auto;
-  margin-right: auto;
-  padding: 0 24px;
-  box-sizing: border-box;
+body.grid-pdp main .section.product-details-container > .product-details-wrapper {
+  position: static !important;
+  width: 100% !important;
+  max-width: 1200px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding-left: 24px !important;
+  padding-right: 24px !important;
+  box-sizing: border-box !important;
 }
 
 body.grid-pdp .product-details {
