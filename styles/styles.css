@@ -713,17 +713,7 @@ body.grid-pdp .product-details__header h1 {
   line-height: 1.25;
   text-align: left;
 }
-/* Anchor the overlay to the section, not the product block */
-body.grid-pdp .product-details-wrapper,
-body.grid-pdp .product-details,
-body.grid-pdp .product-details__wrapper {
-  position: static;
-}
 
-/* Hide the SKU line under the title */
-body.grid-pdp .product-details__header > :not(h1) {
-  display: none;
-}
 /* Phones: put the box below the banner instead of over it */
 @media (width < 700px) {
   body.grid-pdp .product-details__wrapper {
