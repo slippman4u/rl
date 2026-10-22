@@ -242,8 +242,14 @@
   cursor: pointer;
 }
 
+.buy-the-look a.btl-similar,
+.buy-the-look a.btl-similar:hover {
+  color: var(--btl-navy);
+  text-decoration: none;
+}
+
 .buy-the-look .btl-add:hover .btl-add-text,
-.buy-the-look .btl-similar:hover {
+.buy-the-look a.btl-similar:hover {
   text-decoration: underline;
 }
 
