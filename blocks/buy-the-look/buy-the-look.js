@@ -1,9 +1,19 @@
+const SVG_NS = 'http://www.w3.org/2000/svg';
+const MIN_QTY = 1;
+const MAX_QTY = 99;
+
 let instanceCount = 0;
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
   if (className) node.className = className;
   if (text) node.textContent = text;
+  return node;
+}
+
+function svgEl(tag, attrs) {
+  const node = document.createElementNS(SVG_NS, tag);
+  Object.entries(attrs).forEach(([key, value]) => node.setAttribute(key, value));
   return node;
 }
 
@@ -20,19 +30,118 @@ function clonePicture(source, alt) {
 }
 
 function bagIcon() {
-  const ns = 'http://www.w3.org/2000/svg';
-  const svg = document.createElementNS(ns, 'svg');
-  svg.setAttribute('viewBox', '0 0 24 24');
-  svg.setAttribute('width', '20');
-  svg.setAttribute('height', '20');
-  svg.setAttribute('fill', 'none');
-  svg.setAttribute('stroke', 'currentColor');
-  svg.setAttribute('stroke-width', '1.5');
-  svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS(ns, 'path');
-  path.setAttribute('d', 'M3.5 9h17l-1.6 11h-13.8L3.5 9zM8 9V7a4 4 0 0 1 8 0v2');
-  svg.append(path);
+  const svg = svgEl('svg', {
+    viewBox: '0 0 24 24',
+    width: '20',
+    height: '20',
+    fill: 'none',
+    stroke: 'currentColor',
+    'stroke-width': '1.5',
+    'aria-hidden': 'true',
+  });
+  svg.append(svgEl('path', { d: 'M3.5 9h17l-1.6 11h-13.8L3.5 9zM8 9V7a4 4 0 0 1 8 0v2' }));
   return svg;
+}
+
+function incrementerIcon(type) {
+  const svg = svgEl('svg', {
+    width: '16',
+    height: '16',
+    viewBox: '4 2 20 20',
+    fill: 'none',
+    class: `dropin-icon dropin-icon--shape-stroke-1 dropin-incrementer__${type === 'minus' ? 'down' : 'add'}`,
+    'aria-hidden': 'true',
+  });
+  if (type === 'minus') {
+    svg.append(svgEl('path', {
+      d: 'M17.3332 11.75H6.6665',
+      'stroke-width': '1',
+      'stroke-linecap': 'square',
+      'stroke-linejoin': 'round',
+      'vector-effect': 'non-scaling-stroke',
+      fill: 'none',
+      stroke: 'currentColor',
+    }));
+  } else {
+    const group = svgEl('g', { transform: 'translate(9.734 9.737)' });
+    group.append(
+      svgEl('line', {
+        y2: '12.7',
+        transform: 'translate(2.216 -4.087)',
+        'vector-effect': 'non-scaling-stroke',
+        fill: 'none',
+        stroke: 'currentColor',
+      }),
+      svgEl('line', {
+        x2: '12.7',
+        transform: 'translate(-4.079 2.263)',
+        'vector-effect': 'non-scaling-stroke',
+        fill: 'none',
+        stroke: 'currentColor',
+      }),
+    );
+    svg.append(group);
+  }
+  return svg;
+}
+
+/* Same markup and classes as the drop-in incrementer used in the grid. */
+function buildIncrementer({ inputId, ariaLabel, onChange }) {
+  const root = el('div', 'dropin-incrementer dropin-incrementer--medium');
+  const content = el('div', 'dropin-incrementer__content dropin-incrementer__content--medium');
+
+  const decContainer = el('div', 'dropin-incrementer__button-container');
+  const decrease = el('button', 'dropin-incrementer__decrease-button');
+  decrease.type = 'button';
+  decrease.setAttribute('aria-label', 'Decrease Quantity');
+  decrease.append(incrementerIcon('minus'));
+  decContainer.append(decrease);
+
+  const input = el('input', 'dropin-incrementer__input');
+  input.id = inputId;
+  input.type = 'number';
+  input.min = String(MIN_QTY);
+  input.max = String(MAX_QTY);
+  input.step = '1';
+  input.setAttribute('aria-label', ariaLabel);
+
+  const incContainer = el('div', 'dropin-incrementer__button-container');
+  const increase = el('button', 'dropin-incrementer__increase-button');
+  increase.type = 'button';
+  increase.setAttribute('aria-label', 'Increase Quantity');
+  increase.append(incrementerIcon('plus'));
+  incContainer.append(increase);
+
+  content.append(decContainer, input, incContainer);
+  root.append(content);
+
+  let current = MIN_QTY;
+
+  function paint() {
+    input.value = String(current);
+    input.setAttribute('aria-valuetext', String(current));
+    decrease.disabled = current <= MIN_QTY;
+    increase.disabled = current >= MAX_QTY;
+  }
+
+  function set(next) {
+    const parsed = Number.isNaN(next) ? MIN_QTY : Math.trunc(next);
+    current = Math.min(MAX_QTY, Math.max(MIN_QTY, parsed));
+    paint();
+    if (onChange) onChange(current);
+  }
+
+  decrease.addEventListener('click', () => set(current - 1));
+  increase.addEventListener('click', () => set(current + 1));
+  input.addEventListener('change', () => set(parseInt(input.value, 10)));
+
+  paint();
+
+  return {
+    root,
+    getValue: () => current,
+    reset: () => set(MIN_QTY),
+  };
 }
 
 function parseProducts(rows) {
@@ -60,14 +169,14 @@ function buildProduct(product, index, id) {
   const media = el('div', 'btl-product-media');
   const picture = clonePicture(product.picture, product.name);
   if (picture) media.append(picture);
-  const heart = el('button', 'btl-heart', '\u2661');
+  const heart = el('button', 'btl-heart', '♡');
   heart.type = 'button';
   heart.setAttribute('aria-label', `Save ${product.name} to wishlist`);
   heart.setAttribute('aria-pressed', 'false');
   heart.addEventListener('click', () => {
     const on = heart.getAttribute('aria-pressed') !== 'true';
     heart.setAttribute('aria-pressed', String(on));
-    heart.textContent = on ? '\u2665' : '\u2661';
+    heart.textContent = on ? '♥' : '♡';
   });
   media.append(heart);
 
@@ -97,6 +206,17 @@ function buildProduct(product, index, id) {
     info.append(label, select, error);
   }
 
+  const qtyId = `${id}-qty-${index}`;
+  const qtyLabel = el('label', 'btl-label', 'Quantity:');
+  qtyLabel.htmlFor = qtyId;
+  const qty = buildIncrementer({
+    inputId: qtyId,
+    ariaLabel: `Quantity for ${product.name}`,
+  });
+  const qtyWrap = el('div', 'btl-quantity');
+  qtyWrap.append(qty.root);
+  info.append(qtyLabel, qtyWrap);
+
   const status = el('p', 'btl-status');
   status.setAttribute('role', 'status');
   const add = el('button', 'btl-add');
@@ -110,14 +230,16 @@ function buildProduct(product, index, id) {
       select.focus();
       return;
     }
+    const quantity = qty.getValue();
     clearTimeout(timer);
-    addText.textContent = 'Added to Bag \u2713';
+    addText.textContent = 'Added to Bag ✓';
     add.classList.add('is-added');
-    status.textContent = `${product.name} added to bag`;
+    status.textContent = `${quantity} x ${product.name} added to bag`;
     timer = setTimeout(() => {
       addText.textContent = 'Add to Bag';
       add.classList.remove('is-added');
       status.textContent = '';
+      qty.reset();
     }, 2500);
   });
 
