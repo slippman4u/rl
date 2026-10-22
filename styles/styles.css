@@ -810,3 +810,6 @@ html.btl-embed footer {
 html.btl-embed main .section > div:not(.product-details-wrapper) {
   display: none;
 }
+#cart-gift-options-view {
+  display: none;
+}
