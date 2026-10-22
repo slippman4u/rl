@@ -802,3 +802,11 @@ body.grid-pdp .pdp-header__sku {
 header:has(.announcement-bar) {
   height: calc(var(--nav-height) + 48px);
 }
+html.btl-embed header,
+html.btl-embed footer {
+  display: none;
+}
+
+html.btl-embed main .section > div:not(.product-details-wrapper) {
+  display: none;
+}
