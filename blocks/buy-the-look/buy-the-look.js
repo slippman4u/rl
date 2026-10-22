@@ -1,8 +1,26 @@
+import '../../scripts/initializers/cart.js';
+import { CS_FETCH_GRAPHQL } from '../../scripts/commerce.js';
+
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const MIN_QTY = 1;
 const MAX_QTY = 99;
 
+const VARIANTS_QUERY = `
+  query GET_BUY_THE_LOOK_VARIANTS($sku: String!) {
+    variants(sku: $sku) {
+      variants {
+        selections
+        product {
+          sku
+          inStock
+        }
+      }
+    }
+  }
+`;
+
 let instanceCount = 0;
+const variantsCache = new Map();
 
 function el(tag, className, text) {
   const node = document.createElement(tag);
@@ -164,23 +182,100 @@ function parseLink(cell) {
   }
 }
 
+/* "S=sdr-S, M=sdr-M" -> labels for the dropdown + label-to-SKU map */
+function parseOptions(text) {
+  const optionSkus = new Map();
+  const options = text
+    .split(',')
+    .map((entry) => entry.trim())
+    .filter(Boolean)
+    .map((entry) => {
+      const [label, ...rest] = entry.split('=');
+      const name = label.trim();
+      const sku = rest.join('=').trim();
+      if (sku) optionSkus.set(name, sku);
+      return name;
+    });
+  return { options, optionSkus };
+}
+
 function parseProducts(rows) {
   return rows
     .map((row) => {
       const [
-        imageCell, nameCell, priceCell, colorCell, optionsCell, labelCell, similarCell,
+        imageCell, nameCell, priceCell, colorCell, optionsCell, labelCell, similarCell, skuCell,
       ] = [...row.children];
+      const { options, optionSkus } = parseOptions(getText(optionsCell));
       return {
         picture: imageCell ? imageCell.querySelector('picture') : null,
         name: getText(nameCell),
         price: getText(priceCell),
         color: getText(colorCell),
-        options: getText(optionsCell).split(',').map((s) => s.trim()).filter(Boolean),
+        options,
+        optionSkus,
         label: getText(labelCell) || 'Size',
         similar: parseLink(similarCell),
+        sku: getText(skuCell),
       };
     })
     .filter((product) => product.name);
+}
+
+function getVariants(parentSku) {
+  if (!variantsCache.has(parentSku)) {
+    const request = CS_FETCH_GRAPHQL.fetchGraphQl(VARIANTS_QUERY, {
+      method: 'GET',
+      variables: { sku: parentSku },
+    }).then(({ data }) => data?.variants?.variants ?? []);
+    request.catch(() => variantsCache.delete(parentSku));
+    variantsCache.set(parentSku, request);
+  }
+  return variantsCache.get(parentSku);
+}
+
+/* Same call the grid ordering uses: parent SKU + the variant's option UIDs */
+async function addToCart(product, selectedOption, quantity) {
+  // Nothing authored: keep the block in demo mode
+  if (!product.sku && !product.optionSkus.size) return;
+
+  const { addProductsToCart } = await import('@dropins/storefront-cart/api.js');
+
+  // No parent SKU: every option is its own standalone (simple) product
+  if (!product.sku) {
+    const standaloneSku = product.optionSkus.get(selectedOption);
+    if (!standaloneSku) {
+      throw new Error('This option is not linked to a product yet.');
+    }
+    await addProductsToCart([{ sku: standaloneSku, quantity }]);
+    return;
+  }
+
+  if (!product.options.length) {
+    await addProductsToCart([{ sku: product.sku, quantity }]);
+    return;
+  }
+
+  const childSku = product.optionSkus.get(selectedOption);
+  if (!childSku) {
+    throw new Error('This option is not linked to a product yet.');
+  }
+
+  const variants = await getVariants(product.sku);
+  const match = variants.find(
+    (variant) => variant.product?.sku?.toLowerCase() === childSku.toLowerCase(),
+  );
+  if (!match) {
+    throw new Error(`${selectedOption} is not available for this product.`);
+  }
+  if (match.product.inStock === false) {
+    throw new Error(`${selectedOption} is out of stock.`);
+  }
+
+  await addProductsToCart([{
+    sku: product.sku,
+    quantity,
+    optionsUIDs: match.selections,
+  }]);
 }
 
 function buildProduct(product, index, id) {
@@ -244,24 +339,42 @@ function buildProduct(product, index, id) {
   add.type = 'button';
   const addText = el('span', 'btl-add-text', 'Add to Bag');
   add.append(bagIcon(), addText);
+  const cartError = el('p', 'btl-error');
+  cartError.setAttribute('role', 'alert');
+  cartError.hidden = true;
   let timer;
-  add.addEventListener('click', () => {
+  let busy = false;
+  add.addEventListener('click', async () => {
+    if (busy) return;
     if (select && !select.value) {
       error.hidden = false;
       select.focus();
       return;
     }
     const quantity = qty.getValue();
+    cartError.hidden = true;
     clearTimeout(timer);
-    addText.textContent = 'Added to Bag ✓';
-    add.classList.add('is-added');
-    status.textContent = `${quantity} x ${product.name} added to bag`;
-    timer = setTimeout(() => {
+    add.classList.remove('is-added');
+    busy = true;
+    addText.textContent = 'Adding…';
+    try {
+      await addToCart(product, select ? select.value : '', quantity);
+      addText.textContent = 'Added to Bag ✓';
+      add.classList.add('is-added');
+      status.textContent = `${quantity} x ${product.name} added to bag`;
+      timer = setTimeout(() => {
+        addText.textContent = 'Add to Bag';
+        add.classList.remove('is-added');
+        status.textContent = '';
+        qty.reset();
+      }, 2500);
+    } catch (e) {
       addText.textContent = 'Add to Bag';
-      add.classList.remove('is-added');
-      status.textContent = '';
-      qty.reset();
-    }, 2500);
+      cartError.textContent = e.message || 'We could not add this item to your bag.';
+      cartError.hidden = false;
+    } finally {
+      busy = false;
+    }
   });
 
   const actions = el('div', 'btl-actions');
@@ -272,7 +385,7 @@ function buildProduct(product, index, id) {
     if (product.similar.external) similar.rel = 'noopener noreferrer';
     actions.append(similar);
   }
-  info.append(actions, status);
+  info.append(actions, cartError, status);
   panel.append(media, info);
   return panel;
 }
