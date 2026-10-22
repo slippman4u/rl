@@ -101,6 +101,7 @@
 .buy-the-look .btl-thumb:focus-visible,
 .buy-the-look .btl-heart:focus-visible,
 .buy-the-look .btl-add:focus-visible,
+.buy-the-look .btl-quickshop:focus-visible,
 .buy-the-look .btl-similar:focus-visible,
 .buy-the-look .btl-select:focus-visible {
   outline: 2px solid var(--btl-navy);
@@ -228,6 +229,7 @@
 }
 
 .buy-the-look .btl-add,
+.buy-the-look .btl-quickshop,
 .buy-the-look .btl-similar {
   display: inline-flex;
   align-items: center;
@@ -249,6 +251,7 @@
 }
 
 .buy-the-look .btl-add:hover .btl-add-text,
+.buy-the-look .btl-quickshop:hover,
 .buy-the-look a.btl-similar:hover {
   text-decoration: underline;
 }
@@ -278,5 +281,113 @@
   .buy-the-look .btl-body,
   .buy-the-look .btl-product {
     grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.btl-tray-overlay {
+  --btl-navy: #0d1b3a;
+  --btl-mono: ui-monospace, "SF Mono", menlo, consolas, monospace;
+
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgb(0 0 0 / 45%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.btl-tray-overlay[hidden] {
+  display: none;
+}
+
+.btl-tray-overlay.is-open {
+  opacity: 1;
+}
+
+.btl-tray {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(960px, 100vw);
+  background-color: #fff;
+  box-shadow: -4px 0 24px rgb(0 0 0 / 16%);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.btl-tray-overlay.is-open .btl-tray {
+  transform: none;
+}
+
+.btl-tray-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e5e3e0;
+}
+
+.btl-tray-full:any-link {
+  color: var(--btl-navy);
+  font: 400 1.2rem/1.6rem var(--btl-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-decoration: underline;
+}
+
+.btl-tray-close {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--btl-navy);
+  font-size: 3.2rem;
+  line-height: 40px;
+  cursor: pointer;
+}
+
+.btl-tray-close:focus-visible,
+.btl-tray-full:focus-visible {
+  outline: 2px solid var(--btl-navy);
+  outline-offset: 2px;
+}
+
+.btl-tray-loading {
+  position: absolute;
+  top: 64px;
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 24px;
+  color: var(--btl-navy);
+  font: 400 1.3rem/1.6rem var(--btl-mono);
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.btl-tray-loading[hidden] {
+  display: none;
+}
+
+.btl-tray-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background-color: #fff;
+}
+
+html.btl-tray-open {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btl-tray-overlay,
+  .btl-tray {
+    transition: none;
   }
 }
