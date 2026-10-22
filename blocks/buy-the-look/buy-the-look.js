@@ -182,6 +182,23 @@ function parseLink(cell) {
   }
 }
 
+/* Product page for Quick Shop: keep only the path so it works on any branch host */
+function parsePageLink(cell) {
+  if (!cell) return null;
+  const anchor = cell.querySelector('a');
+  const raw = anchor ? anchor.getAttribute('href') : getText(cell);
+  if (!raw || !/^(https?:\/\/|\/)/.test(raw)) return null;
+  try {
+    const url = new URL(raw, window.location.origin);
+    const sameSite = url.origin === window.location.origin
+      || /\.aem\.(page|live)$/.test(url.hostname);
+    if (!sameSite || !/^https?:$/.test(url.protocol)) return null;
+    return `${url.pathname}${url.search}`;
+  } catch (e) {
+    return null;
+  }
+}
+
 /* "S=sdr-S, M=sdr-M" -> labels for the dropdown + label-to-SKU map */
 function parseOptions(text) {
   const optionSkus = new Map();
@@ -204,6 +221,7 @@ function parseProducts(rows) {
     .map((row) => {
       const [
         imageCell, nameCell, priceCell, colorCell, optionsCell, labelCell, similarCell, skuCell,
+        pageCell,
       ] = [...row.children];
       const { options, optionSkus } = parseOptions(getText(optionsCell));
       return {
@@ -216,9 +234,106 @@ function parseProducts(rows) {
         label: getText(labelCell) || 'Size',
         similar: parseLink(similarCell),
         sku: getText(skuCell),
+        page: parsePageLink(pageCell),
       };
     })
     .filter((product) => product.name);
+}
+
+/* Quick Shop tray: the product's real page, framed, sliding in from the right */
+let trayInstance = null;
+
+async function refreshParentCart() {
+  try {
+    const api = await import('@dropins/storefront-cart/api.js');
+    if (typeof api.refreshCart === 'function') await api.refreshCart();
+  } catch (e) {
+    // the cart refreshes on the next page load
+  }
+}
+
+function setBackgroundInert(inert) {
+  document.querySelectorAll('body > header, body > main, body > footer').forEach((node) => {
+    node.inert = inert;
+  });
+}
+
+function getTray() {
+  if (trayInstance) return trayInstance;
+
+  const overlay = el('div', 'btl-tray-overlay');
+  overlay.hidden = true;
+
+  const panel = el('aside', 'btl-tray');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-label', 'Quick shop');
+
+  const bar = el('div', 'btl-tray-bar');
+  const full = el('a', 'btl-tray-full', 'Full details');
+  const close = el('button', 'btl-tray-close', '×');
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Close quick shop');
+  bar.append(full, close);
+
+  const loading = el('p', 'btl-tray-loading', 'Loading…');
+  const frame = el('iframe', 'btl-tray-frame');
+  frame.name = 'btl-tray';
+  frame.title = 'Product quick shop';
+
+  panel.append(bar, loading, frame);
+  overlay.append(panel);
+  document.body.append(overlay);
+
+  let opener = null;
+
+  function closeTray() {
+    if (overlay.hidden || !overlay.classList.contains('is-open')) return;
+    overlay.classList.remove('is-open');
+    document.documentElement.classList.remove('btl-tray-open');
+    setBackgroundInert(false);
+    setTimeout(() => { overlay.hidden = true; }, 300);
+    if (opener) opener.focus();
+    refreshParentCart();
+  }
+
+  frame.addEventListener('load', () => {
+    loading.hidden = true;
+    try {
+      frame.contentWindow.document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') closeTray();
+      });
+    } catch (e) {
+      // framed page is not same-origin; the close button still works
+    }
+  });
+
+  close.addEventListener('click', closeTray);
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) closeTray();
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeTray();
+  });
+
+  function open(page, name, openerEl) {
+    opener = openerEl;
+    full.href = page;
+    panel.setAttribute('aria-label', `Quick shop: ${name}`);
+    if (frame.dataset.page !== page) {
+      loading.hidden = false;
+      frame.dataset.page = page;
+      frame.src = page;
+    }
+    overlay.hidden = false;
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+    document.documentElement.classList.add('btl-tray-open');
+    setBackgroundInert(true);
+    close.focus();
+  }
+
+  trayInstance = { open, close: closeTray };
+  return trayInstance;
 }
 
 function getVariants(parentSku) {
@@ -379,6 +494,12 @@ function buildProduct(product, index, id) {
 
   const actions = el('div', 'btl-actions');
   actions.append(add);
+  if (product.page) {
+    const quick = el('button', 'btl-quickshop', 'Quick Shop');
+    quick.type = 'button';
+    quick.addEventListener('click', () => getTray().open(product.page, product.name, quick));
+    actions.append(quick);
+  }
   if (product.similar) {
     const similar = el('a', 'btl-similar', product.similar.text);
     similar.href = product.similar.href;
