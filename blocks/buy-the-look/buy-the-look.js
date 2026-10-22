@@ -144,11 +144,31 @@ function buildIncrementer({ inputId, ariaLabel, onChange }) {
   };
 }
 
+function parseLink(cell) {
+  if (!cell) return null;
+  const anchor = cell.querySelector('a');
+  const raw = anchor ? anchor.getAttribute('href') : getText(cell);
+  if (!raw) return null;
+  if (!anchor && !/^(https?:\/\/|\/)/.test(raw)) return null;
+  try {
+    const url = new URL(raw, window.location.origin);
+    if (url.protocol !== 'https:' && url.protocol !== 'http:') return null;
+    const linkText = anchor ? getText(anchor) : '';
+    return {
+      href: url.href,
+      text: linkText && !/^https?:\/\//.test(linkText) ? linkText : 'See Similar',
+      external: url.origin !== window.location.origin,
+    };
+  } catch (e) {
+    return null;
+  }
+}
+
 function parseProducts(rows) {
   return rows
     .map((row) => {
       const [
-        imageCell, nameCell, priceCell, colorCell, optionsCell, labelCell,
+        imageCell, nameCell, priceCell, colorCell, optionsCell, labelCell, similarCell,
       ] = [...row.children];
       return {
         picture: imageCell ? imageCell.querySelector('picture') : null,
@@ -157,6 +177,7 @@ function parseProducts(rows) {
         color: getText(colorCell),
         options: getText(optionsCell).split(',').map((s) => s.trim()).filter(Boolean),
         label: getText(labelCell) || 'Size',
+        similar: parseLink(similarCell),
       };
     })
     .filter((product) => product.name);
@@ -243,11 +264,14 @@ function buildProduct(product, index, id) {
     }, 2500);
   });
 
-  const similar = el('button', 'btl-similar', 'See Similar');
-  similar.type = 'button';
-
   const actions = el('div', 'btl-actions');
-  actions.append(add, similar);
+  actions.append(add);
+  if (product.similar) {
+    const similar = el('a', 'btl-similar', product.similar.text);
+    similar.href = product.similar.href;
+    if (product.similar.external) similar.rel = 'noopener noreferrer';
+    actions.append(similar);
+  }
   info.append(actions, status);
   panel.append(media, info);
   return panel;
