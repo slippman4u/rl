@@ -7,3 +7,82 @@
   display: block;
   width: 100%;
 }
+
+/* Video on the left, details on the right */
+.video.video-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+  max-width: 1200px;
+  margin: 40px auto;
+}
+
+.video.video-split.video-split-text-only {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.video.video-split .video-media video {
+  border-radius: 16px;
+  background-color: #f0efed;
+}
+
+.video .video-details {
+  color: #0d1b3a;
+}
+
+.video .video-details h2,
+.video .video-details h3,
+.video .video-details h4,
+.video .video-details .video-details-heading {
+  margin: 40px 0 12px;
+  font-family: var(--body-font-family, sans-serif);
+  font-size: 1.4rem;
+  font-weight: 700;
+  line-height: 2rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #0d1b3a;
+}
+
+.video .video-details > :first-child {
+  margin-top: 0;
+}
+
+.video .video-details p {
+  margin: 0 0 12px;
+  font-family: "Bodoni 72", didot, "Bodoni MT", baskerville, "Times New Roman", serif;
+  font-size: 1.7rem;
+  line-height: 2.8rem;
+  color: #0d1b3a;
+}
+
+.video .video-details p.video-details-heading {
+  margin: 40px 0 12px;
+  font-family: var(--body-font-family, sans-serif);
+  font-size: 1.4rem;
+  line-height: 2rem;
+}
+
+.video .video-details > p.video-details-heading:first-child {
+  margin-top: 0;
+}
+
+.video .video-details ul {
+  margin: 0 0 12px;
+  padding-left: 20px;
+  font-size: 1.5rem;
+  line-height: 2.6rem;
+}
+
+.video .video-details a {
+  color: #0d1b3a;
+  text-decoration: underline;
+}
+
+@media (width < 900px) {
+  .video.video-split {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 24px;
+  }
+}
