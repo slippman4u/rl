@@ -813,3 +813,18 @@ html.btl-embed main .section > div:not(.product-details-wrapper) {
 #cart-gift-options-view {
   display: none;
 }
+/* Full-width home page banner */
+main .section.targeted-block-container:has(.hero) {
+  padding: 0 !important;
+  margin-top: 0 !important;
+}
+
+main .section.targeted-block-container:has(.hero) > .targeted-block-wrapper,
+main .section.targeted-block-container:has(.hero) .targeted-block {
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+main .section.targeted-block-container .hero {
+  min-height: 520px;
+}
