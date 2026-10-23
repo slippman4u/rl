@@ -11,6 +11,8 @@ import renderAuthCombine from './renderAuthCombine.js';
 import { renderAuthDropdown } from './renderAuthDropdown.js';
 import renderSellerAssistedBuyingBanner from './renderSellerAssistedBuyingBanner.js';
 
+import buildMegaMenu from './mega-menu.js';
+
 // media query match that indicates mobile/tablet width
 const isDesktop = window.matchMedia('(min-width: 900px)');
 
@@ -209,6 +211,7 @@ export default async function decorate(block) {
           navSection.setAttribute('aria-expanded', 'false');
         }
         setupSubmenu(navSection);
+           buildMegaMenu(navSection);
         navSection.addEventListener('click', (event) => {
           if (event.target.tagName === 'A') return;
           if (!isDesktop.matches) {
