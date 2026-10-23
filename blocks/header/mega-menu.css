@@ -1,0 +1,240 @@
+/* Mega menu. Desktop only; mobile keeps the existing slide-in menu.
+   Rules are written to out-rank the boilerplate nav styles in header.css. */
+.mega-panel {
+  display: none;
+}
+
+@media (min-width: 900px) {
+  /* Cleaner top bar: one size, underline instead of a grey pill */
+  header nav .nav-sections .default-content-wrapper > ul {
+    gap: 8px;
+    align-items: center;
+  }
+
+  header nav .nav-sections .default-content-wrapper > ul > li,
+  header nav .nav-sections .default-content-wrapper > ul > li > a,
+  header nav .nav-sections .default-content-wrapper > ul > li > p,
+  header nav .nav-sections .default-content-wrapper > ul > li > p > a {
+    font-size: 1.5rem;
+    font-weight: 500;
+    letter-spacing: 0.02em;
+    line-height: 2rem;
+  }
+
+  header nav .nav-sections .default-content-wrapper > ul > li {
+    padding: 22px 14px;
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+    background-color: transparent;
+  }
+
+  header nav .nav-sections .default-content-wrapper > ul > li:hover,
+  header nav .nav-sections .nav-drop[aria-expanded='true'] {
+    background-color: transparent;
+    border-bottom-color: #0d1b3a;
+  }
+
+  /* hide the old dropdown when a mega panel was built */
+  header nav .nav-sections li.has-mega > .submenu-wrapper {
+    display: none !important;
+  }
+
+  header nav .nav-sections .default-content-wrapper > ul > li[aria-expanded='true'] .mega-panel {
+    display: block;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    z-index: 4;
+    width: 100%;
+    box-sizing: border-box;
+    border-top: 1px solid #e5e3e0;
+    border-bottom: 1px solid #e5e3e0;
+    background-color: #fff;
+    box-shadow: 0 12px 24px rgb(0 0 0 / 8%);
+    white-space: normal;
+    font-weight: 400;
+
+    & ul {
+      display: block;
+      position: static;
+      width: auto;
+      max-width: none;
+      min-height: 0;
+      max-height: none;
+      margin: 0;
+      padding: 0;
+      overflow: visible;
+      list-style: none;
+    }
+
+    & ul::before {
+      content: none;
+    }
+
+    & li {
+      min-width: 0;
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    & .mega-inner {
+      display: grid;
+      grid-template-columns: 220px minmax(0, 1fr) 220px 300px;
+      gap: 0 40px;
+      box-sizing: border-box;
+      max-width: 1264px;
+      margin: 0 auto;
+      padding: 32px;
+      cursor: default;
+    }
+
+    & .mega-inner.no-shortcuts {
+      grid-template-columns: 220px minmax(0, 1fr) 300px;
+    }
+
+    & .mega-inner.no-feature {
+      grid-template-columns: 220px minmax(0, 1fr) 220px;
+    }
+
+    & .mega-inner.no-shortcuts.no-feature {
+      grid-template-columns: 220px minmax(0, 1fr);
+    }
+
+    & .mega-nav {
+      padding-right: 24px;
+      border-right: 1px solid #e5e3e0;
+    }
+
+    & .mega-cat {
+      display: block;
+      width: 100%;
+      padding: 10px 12px;
+      border: 0;
+      border-left: 3px solid transparent;
+      border-radius: 0;
+      background: none;
+      color: #0d1b3a;
+      font-size: 1.7rem;
+      font-weight: 400;
+      line-height: 2.4rem;
+      text-align: left;
+      text-decoration: none;
+      cursor: pointer;
+    }
+
+    & .mega-cat.is-active,
+    & .mega-cat:hover {
+      border-left-color: #0d1b3a;
+      background-color: #f5f4f2;
+      text-decoration: none;
+    }
+
+    & .mega-subs {
+      min-width: 0;
+    }
+
+    & .mega-sub[hidden] {
+      display: none;
+    }
+
+    & .mega-cols {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 24px 32px;
+    }
+
+    & .mega-heading {
+      margin: 0 0 12px;
+      color: #0d1b3a;
+      font-family: ui-monospace, 'SF Mono', menlo, consolas, monospace;
+      font-size: 1.2rem;
+      font-weight: 400;
+      line-height: 1.6rem;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    & .mega-heading a {
+      color: inherit;
+      font: inherit;
+      text-decoration: none;
+    }
+
+    & .mega-links li {
+      margin-bottom: 4px;
+    }
+
+    & .mega-link {
+      display: inline-block;
+      padding: 4px 0;
+      color: #3a3a3a;
+      font-size: 1.5rem;
+      font-weight: 400;
+      line-height: 2rem;
+      letter-spacing: 0;
+      text-decoration: none;
+    }
+
+    & a.mega-link:hover,
+    & .mega-all:hover,
+    & .mega-heading a:hover {
+      color: #0d1b3a;
+      text-decoration: underline;
+    }
+
+    & .mega-all {
+      display: inline-block;
+      margin-top: 24px;
+      color: #0d1b3a;
+      font-size: 1.4rem;
+      font-weight: 600;
+      text-decoration: none;
+    }
+
+    & .mega-shortcuts {
+      padding-left: 24px;
+      border-left: 1px solid #e5e3e0;
+    }
+
+    & .mega-feature {
+      display: block;
+      color: #0d1b3a;
+      text-decoration: none;
+    }
+
+    & .mega-feature-media {
+      aspect-ratio: 4 / 5;
+      overflow: hidden;
+      background-color: #f0efed;
+    }
+
+    & .mega-feature-media picture,
+    & .mega-feature-media img {
+      display: block;
+      width: 100%;
+      max-width: none;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    & .mega-feature-caption {
+      display: block;
+      margin-top: 8px;
+      font-size: 1.5rem;
+      font-weight: 600;
+    }
+
+    & .mega-feature:hover .mega-feature-caption {
+      text-decoration: underline;
+    }
+
+    & a:focus-visible,
+    & button:focus-visible {
+      outline: 2px solid #0d1b3a;
+      outline-offset: 2px;
+    }
+  }
+}
