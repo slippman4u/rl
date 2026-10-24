@@ -33,6 +33,7 @@ import {
   fetchPlaceholders, getProductLink, rootLink, setJsonLd,
 } from '../../scripts/commerce.js';
 import { readBlockConfig } from '../../scripts/aem.js';
+import { wholesaleSlots, renderWholesaleStrip } from '../../scripts/wholesale-mock.js';
 
 // Initializers
 import { IMAGES_SIZES } from '../../scripts/initializers/pdp.js';
@@ -143,6 +144,7 @@ export default async function decorate(block) {
         <div class="product-details__attributes"></div>
       </div>
     </div>
+    <div class="product-details__wholesale"></div>
     <div class="product-details__grid-ordering ${isGridOrderingView ? 'product-details__grid-ordering--enabled' : 'product-details__grid-ordering--disabled'}"></div>
   `);
 
@@ -167,6 +169,11 @@ export default async function decorate(block) {
   const $gridOrderingContainer = fragment.querySelector('.product-details__grid-ordering');
 
   block.replaceChildren(fragment);
+
+  // Mock wholesale pricing summary (demo)
+  if (isGridOrderingView) {
+    renderWholesaleStrip(block.querySelector('.product-details__wholesale'), product);
+  }
 
   const gallerySlots = {
     CarouselThumbnail: (ctx) => {
@@ -280,14 +287,17 @@ export default async function decorate(block) {
           { key: 'variantOptionAttributes', label: 'Variant' },
           { key: 'sku', label: 'SKU' },
           { key: 'availability', label: 'Availability' },
-          { key: 'price', label: 'Price' },
+          { key: 'wholesale', label: 'Wholesale' },
+          { key: 'msrp', label: 'Retail (MSRP)' },
+          { key: 'margin', label: 'Margin' },
           { key: 'quantity', label: 'Quantity' },
-          { key: 'subtotal', label: 'Subtotal' },
+          { key: 'wholesaleTotal', label: 'Wholesale total' },
           ...(checkIsAuthenticated()
             ? [{ key: 'requisitionList', label: 'Action' }]
             : []),
         ],
         slots: {
+          ...wholesaleSlots(product),
           RequisitionListCell: async (ctx) => {
             const { variant } = ctx;
 
