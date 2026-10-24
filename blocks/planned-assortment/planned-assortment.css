@@ -416,6 +416,7 @@
   padding: 32px;
   text-align: center;
 }
+
 /* Spacing fixes */
 .planned-assortment .pa-head {
   align-items: flex-start;
@@ -427,35 +428,75 @@
   line-height: 2.4rem;
 }
 
-.planned-assortment .pa-sub .pa-fit {
-  margin-left: 8px;
-  vertical-align: middle;
-}
-
-.planned-assortment .pa-kpis > .pa-fit {
-  grid-column: 1 / -1;
-  justify-self: start;
-}
-
-.planned-assortment .pa-pivot-table caption .pa-fit {
-  margin-left: 8px;
-  vertical-align: middle;
-}
-
 .planned-assortment .pa-controls {
+  position: relative;
   row-gap: 12px;
 }
-/* RFP fit labels, hidden until toggled */
+
+/* RFP fit labels: hidden until toggled, and they float over the page
+   (position: absolute) so showing them never moves anything else. */
 .planned-assortment .pa-fit {
   display: none;
+  position: absolute;
+  z-index: 3;
   padding: 1px 8px;
   border-radius: 10px;
   font: 400 1.1rem/1.5rem var(--pa-mono);
   white-space: nowrap;
+  pointer-events: none;
 }
 
 .planned-assortment.pa-show-fit .pa-fit {
   display: inline-block;
+}
+
+/* where each label floats */
+.planned-assortment .pa-head > div:first-child,
+.planned-assortment .pa-kpis,
+.planned-assortment .pa-pivot,
+.planned-assortment .pa-bulk,
+.planned-assortment .pa-banner {
+  position: relative;
+}
+
+.planned-assortment .pa-sub .pa-fit {
+  top: 0;
+  right: 0;
+}
+
+.planned-assortment .pa-kpis > .pa-fit {
+  top: -24px;
+  right: 0;
+}
+
+.planned-assortment .pa-pivot-table caption .pa-fit {
+  top: 0;
+  right: 0;
+}
+
+.planned-assortment .pa-bulk > .pa-fit,
+.planned-assortment .pa-banner > .pa-fit {
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+}
+
+.planned-assortment .pa-fit-group {
+  display: none;
+  position: absolute;
+  top: -11px;
+  right: 0;
+  z-index: 3;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.planned-assortment.pa-show-fit .pa-fit-group {
+  display: flex;
+}
+
+.planned-assortment .pa-fit-group .pa-fit {
+  position: static;
 }
 
 .planned-assortment .pa-fit-ootb { background: #d9ead3; color: #1d5a1f; }
