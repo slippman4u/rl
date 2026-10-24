@@ -962,3 +962,8 @@ header:has(.announcement-bar):has(.account-bar:not([hidden])) {
     display: none;
   }
 }
+/* Nudge logo down so the top of "RALPH LAUREN" lines up with the nav text */
+header .nav-brand {
+  position: relative;
+  top: 6px;
+}
