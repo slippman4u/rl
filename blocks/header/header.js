@@ -10,7 +10,7 @@ import { fetchPlaceholders, getProductLink, rootLink } from '../../scripts/comme
 import renderAuthCombine from './renderAuthCombine.js';
 import { renderAuthDropdown } from './renderAuthDropdown.js';
 import renderSellerAssistedBuyingBanner from './renderSellerAssistedBuyingBanner.js';
-
+import renderAccountBar from './account-bar.js';
 import buildMegaMenu from './mega-menu.js';
 
 // media query match that indicates mobile/tablet width
@@ -593,7 +593,7 @@ export default async function decorate(block) {
     () => !isDesktop.matches && toggleMenu(nav, navSections, false),
   );
   renderAuthDropdown(navTools);
-
+  renderAccountBar(block);
   /** Company Switcher */
   const isAuthenticated = events.lastPayload('authenticated');
   if (isAuthenticated && getConfigValue('commerce-companies-enabled') === true) {
