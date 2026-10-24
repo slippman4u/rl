@@ -519,10 +519,10 @@ export default async function decorate(block) {
       fitBtn));
 
   const controls = el('div', { class: 'pa-controls' },
-    el('div', { class: 'pa-view' }, btnPicture, btnData, fit('custom', 'PAP-3.1')),
-    fobSelect, groupSelect, search, roleSelect,
-    el('label', { class: 'pa-all' }, selectAll, ' Select all'),
-    fit('ootb', 'PAP-3.3'), fit('custom', 'PAP-5.1'));
+   el('div', { class: 'pa-view' }, btnPicture, btnData),
+   fobSelect, groupSelect, search, roleSelect,
+   el('label', { class: 'pa-all' }, selectAll, ' Select all'),
+   el('div', { class: 'pa-fit-group' }, fit('custom', 'PAP-3.1'), fit('ootb', 'PAP-3.3'), fit('custom', 'PAP-5.1')));
 
   block.classList.add('pa-ready');
   block.replaceChildren(head, banner, kpis, pivot, chips, controls, bulk, status, content, dialog);
