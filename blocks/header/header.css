@@ -905,6 +905,9 @@ body:has(.seller-assisted-buying-banner) {
 }
 /* Account bar (shown only when signed in) */
 header .account-bar {
+  box-sizing: border-box;
+  height: 40px;
+  overflow: hidden;
   background-color: #f5f4f2;
   border-bottom: 1px solid #e5e3e0;
   color: #0d1b3a;
@@ -918,13 +921,15 @@ header .account-bar[hidden] {
 
 header .account-bar .account-bar-inner {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   gap: 4px 20px;
   box-sizing: border-box;
   max-width: 1264px;
+  height: 100%;
   margin: 0 auto;
-  padding: 8px 32px;
+  padding: 0 32px;
+  white-space: nowrap;
 }
 
 header .account-bar .account-bar-company {
@@ -933,18 +938,24 @@ header .account-bar .account-bar-company {
   text-transform: uppercase;
 }
 
-header .account-bar .account-bar-item + .account-bar-item::before {
-  content: '';
-}
-
 header .account-bar .account-bar-extra {
   padding-left: 20px;
   border-left: 1px solid #c9c6c1;
 }
 
+/* The header has a fixed height, so it must grow when the bar is showing.
+   Without this the page slides under the nav and covers the top of the content. */
+header:has(.account-bar:not([hidden])) {
+  height: calc(var(--nav-height) + 40px);
+}
+
+header:has(.announcement-bar):has(.account-bar:not([hidden])) {
+  height: calc(var(--nav-height) + 48px + 40px);
+}
+
 @media (width < 700px) {
   header .account-bar .account-bar-inner {
-    padding: 8px 16px;
+    padding: 0 16px;
   }
 
   header .account-bar .account-bar-extra {
