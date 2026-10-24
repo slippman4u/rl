@@ -9,9 +9,9 @@ import { CORE_FETCH_GRAPHQL } from '../../scripts/commerce.js';
  * Edit the demo values below.
  */
 const FALLBACK_COMPANY = 'Acme';
-const SEASON_TEXT = 'Season: Fall 2027';
+const SEASON_TEXT = 'Season: Fall 2026';
 const WINDOW_TEXT = 'Order window closes Dec 15';
-const MOCK_CREDIT = 250000; // used only if the real credit query returns nothing
+const MOCK_CREDIT = 500000; // used only if the real credit query returns nothing
 
 const money = (value, currency = 'USD') => {
   try {
