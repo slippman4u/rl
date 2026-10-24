@@ -416,7 +416,35 @@
   padding: 32px;
   text-align: center;
 }
+/* Spacing fixes */
+.planned-assortment .pa-head {
+  align-items: flex-start;
+  height: auto;
+  margin-bottom: 28px;
+}
 
+.planned-assortment .pa-sub {
+  line-height: 2.4rem;
+}
+
+.planned-assortment .pa-sub .pa-fit {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.planned-assortment .pa-kpis > .pa-fit {
+  grid-column: 1 / -1;
+  justify-self: start;
+}
+
+.planned-assortment .pa-pivot-table caption .pa-fit {
+  margin-left: 8px;
+  vertical-align: middle;
+}
+
+.planned-assortment .pa-controls {
+  row-gap: 12px;
+}
 /* RFP fit labels, hidden until toggled */
 .planned-assortment .pa-fit {
   display: none;
