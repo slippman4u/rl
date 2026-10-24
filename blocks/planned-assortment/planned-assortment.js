@@ -507,7 +507,7 @@ export default async function decorate(block) {
     fitBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
   } }, 'Show RFP fit labels');
 
-  const head = el('header', { class: 'pa-head' },
+  const head = el('div', { class: 'pa-head' },
     el('div', {},
       el('p', { class: 'pa-eyebrow' }, 'Planned assortment'),
       el('h2', { class: 'pa-title' }, `${season} · ${account}`),
