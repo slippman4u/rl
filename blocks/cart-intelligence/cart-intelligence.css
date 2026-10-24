@@ -1,0 +1,114 @@
+.cart-intelligence {
+  max-width: 1200px;
+  margin: 0 auto 24px;
+  color: #0d1b3a;
+}
+
+.cart-intelligence[hidden] {
+  display: none;
+}
+
+.cart-intelligence .ci-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.cart-intelligence .ci-card {
+  box-sizing: border-box;
+  padding: 18px 20px;
+  background-color: #f0efed;
+}
+
+.cart-intelligence .ci-card p {
+  margin: 0;
+}
+
+.cart-intelligence .ci-label {
+  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cart-intelligence .ci-big {
+  margin-top: 6px;
+  font: 400 3rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+}
+
+.cart-intelligence .ci-of {
+  font: 400 1.4rem/2rem var(--type-base-font-family, sans-serif);
+  color: #4a4a4a;
+}
+
+.cart-intelligence .ci-bar {
+  display: flex;
+  height: 12px;
+  margin: 12px 0;
+  overflow: hidden;
+  border-radius: 6px;
+  background-color: #dedbd6;
+}
+
+.cart-intelligence .ci-seg {
+  display: block;
+  height: 100%;
+}
+
+.cart-intelligence .ci-legend {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 1.3rem;
+  line-height: 1.8rem;
+}
+
+.cart-intelligence .ci-legend li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+}
+
+.cart-intelligence .ci-dot {
+  display: inline-block;
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.cart-intelligence .ci-dot-empty {
+  border: 1px solid #8a8a8a;
+  background: transparent;
+}
+
+.cart-intelligence .ci-status {
+  margin-top: 4px;
+  font-size: 1.3rem;
+  line-height: 1.8rem;
+}
+
+.cart-intelligence .ci-ok { color: #1d5a1f; }
+.cart-intelligence .ci-warn { color: #7a4b00; }
+.cart-intelligence .ci-bad { color: #b3261e; font-weight: 600; }
+
+.cart-intelligence .ci-sub {
+  margin-top: 10px;
+  font-size: 1.3rem;
+}
+
+.cart-intelligence .ci-note {
+  margin: 8px 0 0;
+  font-size: 1.2rem;
+  color: #6b6b6b;
+}
+
+/* Demo enforcement of the minimum order: checkout link is greyed out */
+body.cart-below-minimum .cart__order-summary a[href*='checkout'] {
+  opacity: 0.4;
+  pointer-events: none;
+  cursor: not-allowed;
+}
