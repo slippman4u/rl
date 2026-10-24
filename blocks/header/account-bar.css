@@ -1,0 +1,48 @@
+/* Account bar (shown only when signed in) */
+header .account-bar {
+  background-color: #f5f4f2;
+  border-bottom: 1px solid #e5e3e0;
+  color: #0d1b3a;
+  font-size: 1.3rem;
+  line-height: 2rem;
+}
+
+header .account-bar[hidden] {
+  display: none;
+}
+
+header .account-bar .account-bar-inner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 20px;
+  box-sizing: border-box;
+  max-width: 1264px;
+  margin: 0 auto;
+  padding: 8px 32px;
+}
+
+header .account-bar .account-bar-company {
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+header .account-bar .account-bar-item + .account-bar-item::before {
+  content: '';
+}
+
+header .account-bar .account-bar-extra {
+  padding-left: 20px;
+  border-left: 1px solid #c9c6c1;
+}
+
+@media (width < 700px) {
+  header .account-bar .account-bar-inner {
+    padding: 8px 16px;
+  }
+
+  header .account-bar .account-bar-extra {
+    display: none;
+  }
+}
