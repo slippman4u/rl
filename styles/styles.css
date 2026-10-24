@@ -828,3 +828,63 @@ main .section.targeted-block-container:has(.hero) .targeted-block {
 main .section.targeted-block-container .hero {
   min-height: 520px;
 }
+/* Wholesale pricing strip and grid columns (mock data) */
+.product-details__wholesale {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+  margin: 24px 0 16px;
+}
+
+.product-details__wholesale:empty {
+  display: none;
+}
+
+.product-details__wholesale .wh-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 14px 16px;
+  background-color: #f0efed;
+  color: #0d1b3a;
+}
+
+.product-details__wholesale .wh-stat-label {
+  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.product-details__wholesale .wh-stat-value {
+  font: 400 2.8rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+}
+
+.product-details__wholesale .wh-stat-sub {
+  font-size: 1.3rem;
+}
+
+.product-details__wholesale .wh-note {
+  grid-column: 1 / -1;
+  font-size: 1.2rem;
+  color: #6b6b6b;
+}
+
+.product-details__grid-ordering .wh-price,
+.product-details__grid-ordering .wh-total {
+  font-weight: 700;
+}
+
+.product-details__grid-ordering .wh-margin {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 10px;
+  background: #dcefd9;
+  color: #1d5a1f;
+  font-size: 1.3rem;
+}
+
+@media (width < 700px) {
+  .product-details__wholesale {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
