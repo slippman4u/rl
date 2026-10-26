@@ -286,7 +286,6 @@ export default async function decorate(block) {
       card('Door placements', num.format(t.doors)),
       card('Wholesale cost', money.format(t.cost)),
       card('Extended retail', money.format(t.retail)),
-      fit('custom', 'PAP-4.1, 4.2'),
     );
   }
 
@@ -419,10 +418,9 @@ export default async function decorate(block) {
     bulk.hidden = n === 0;
     bulk.replaceChildren(
       el('strong', {}, `${n} selected`),
-      state.canEdit ? el('button', { type: 'button', class: 'pa-btn', onclick: () => openNote([...state.selected]) }, 'Add note') : null,
+      ...(state.canEdit ? [el('button', { type: 'button', class: 'pa-btn', onclick: () => openNote([...state.selected]) }, 'Add note')] : []),
       el('button', { type: 'button', class: 'pa-btn', onclick: () => exportCsv(state.items.filter((i) => state.selected.has(i.id)), 'selected') }, 'Export selected'),
-      el('button', { type: 'button', class: 'pa-btn', onclick: () => { state.selected.clear(); render(); } }, 'Clear'),
-      fit('custom', 'PAP-3.4'));
+      el('button', { type: 'button', class: 'pa-btn', onclick: () => { state.selected.clear(); render(); } }, 'Clear'));
     const visibleIds = list.map((i) => i.id);
     selectAll.checked = visibleIds.length > 0 && visibleIds.every((id) => state.selected.has(id));
   }
@@ -437,8 +435,7 @@ export default async function decorate(block) {
     banner.hidden = !state.updateSummary;
     banner.replaceChildren(
       el('span', {}, state.updateSummary),
-      el('button', { type: 'button', class: 'pa-btn', onclick: resetPlan }, 'Reset demo'),
-      fit('ootb', 'PAP-7.1, 7.2'));
+      el('button', { type: 'button', class: 'pa-btn', onclick: resetPlan }, 'Reset demo'));
     renderKpis(list);
     renderPivot();
     renderChips();
