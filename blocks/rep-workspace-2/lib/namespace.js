@@ -25,6 +25,20 @@ if (!window.__rw2Namespaced) {
     return realFetch(input, init);
   };
 
+  // 3. share link: the original builds ".../showroom?share=..."; this page is /showroom-2
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+  if (valueSetter && valueSetter.set) {
+    Object.defineProperty(HTMLInputElement.prototype, 'value', {
+      ...valueSetter,
+      set(next) {
+        const fixed = this.id === 'rw-share-link' && typeof next === 'string'
+          ? next.replace('/showroom?', `${window.location.pathname.replace(/\/$/, '')}?`)
+          : next;
+        valueSetter.set.call(this, fixed);
+      },
+    });
+  }
+
   // 2. session state
   const proto = Object.getPrototypeOf(window.sessionStorage);
   const isSession = (store) => {
