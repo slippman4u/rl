@@ -43,7 +43,7 @@ import {
   renderCartItemPromotions,
   ACCEPTED_FILE_TYPES,
 } from '../../scripts/commerce.js';
-
+import { renderShippingEstimate } from '../../scripts/shipping-mock.js';
 export default async function decorate(block) {
   // Configuration
   const {
@@ -297,7 +297,10 @@ export default async function decorate(block) {
         Footer: (ctx) => {
           // Promotion / discount rule labels
           renderCartItemPromotions(ctx);
-
+          // Mock shipping estimate (demo)
+          const shipEstimate = document.createElement('div');
+          renderShippingEstimate(shipEstimate, ctx.item);
+          ctx.appendChild(shipEstimate);
           // Edit Link
           if (ctx.item?.itemType === 'ConfigurableCartItem' && enableUpdatingProduct === 'true') {
             const editLink = document.createElement('div');
