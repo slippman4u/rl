@@ -19,8 +19,8 @@
   --rw-support-blue: rgb(46 74 122);
   --rw-plan-purple: rgb(110 31 43);
 
-  /* typography: the same Didot/Bodoni serif as the storefront */
-  --rw-serif: 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+  /* typography: back to the original heading font (Georgia) */
+  --rw-serif: Georgia, 'Times New Roman', serif;
 }
 
 /* sharper corners and a more editorial button */
@@ -34,10 +34,4 @@
 .rep-workspace.rep-workspace-2 .rw-button {
   font-size: 0.85em;
   font-weight: 500;
-}
-
-.rep-workspace.rep-workspace-2 h1,
-.rep-workspace.rep-workspace-2 h2,
-.rep-workspace.rep-workspace-2 h3 {
-  letter-spacing: 0.01em;
 }
