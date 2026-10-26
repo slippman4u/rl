@@ -82,22 +82,6 @@ function totals(list) {
   }), { units: 0, target: 0, doors: 0, cost: 0, retail: 0 });
 }
 
-function variance(units, target) {
-  const diff = units - target;
-  const pct = target ? (diff / target) * 100 : 0;
-  let kind = 'ok';
-  if (pct < -5) kind = 'low';
-  else if (pct > 5) kind = 'high';
-  const sign = pct > 0 ? '+' : '';
-  return { diff, pct, kind, label: `${sign}${pct.toFixed(1)}%` };
-}
-
-function varChip(units, target) {
-  const v = variance(units, target);
-  const word = { ok: 'On target', low: 'Below target', high: 'Above target' }[v.kind];
-  return el('span', { class: `pa-var pa-var-${v.kind}`, title: `${word}: ${num.format(v.diff)} units vs target` }, v.label);
-}
-
 function csvCell(v) {
   let s = String(v ?? '');
   if (typeof v === 'string' && /^[=+\-@\t\r]/.test(s)) s = `'${s}`;
@@ -132,7 +116,7 @@ export default async function decorate(block) {
     tier: '',
     cluster: '',
     group: 'none',
-    canEdit: true,
+    canEdit: false, // buyer view: read-only
     selected: new Set(),
     notes: new Map(),
     changed: new Map(),
@@ -154,10 +138,8 @@ export default async function decorate(block) {
     if (hp.get('fob')) state.fob = hp.get('fob');
   } catch (e) { /* ignore */ }
 
-  const fit = (kind, ref) => el('span', {
-    class: `pa-fit pa-fit-${kind}`,
-    title: kind === 'ootb' ? 'Out of the box (RFP response)' : 'Custom, simple (RFP response)',
-  }, `${kind === 'ootb' ? 'OOTB' : 'Custom'} · ${ref}`);
+  // RFP labels removed from the buyer view; kept as a no-op so the calls below stay harmless.
+  const fit = () => null;
 
   const status = el('p', { class: 'pa-status', role: 'status', 'aria-live': 'polite' });
   const say = (m) => { status.textContent = m; };
@@ -181,15 +163,9 @@ export default async function decorate(block) {
   const banner = el('div', { class: 'pa-banner', hidden: true });
 
   const fobSelect = el('select', { id: 'pa-fob', 'aria-label': 'Family of business' });
-  const groupSelect = el('select', { id: 'pa-group', 'aria-label': 'Group by' },
-    ...[['none', 'No grouping'], ['tier', 'Group by tier'], ['cluster', 'Group by cluster'], ['fob', 'Group by FOB']]
-      .map(([v, l]) => el('option', { value: v }, l)));
-  const roleSelect = el('select', { id: 'pa-role', 'aria-label': 'Viewing as' },
-    el('option', { value: 'edit' }, 'Viewing as: Sales rep (can edit)'),
-    el('option', { value: 'view' }, 'Viewing as: Buyer (view only)'));
   const search = el('input', { type: 'search', id: 'pa-search', placeholder: 'Search style, colour, tier', 'aria-label': 'Search assortment' });
-  const btnPicture = el('button', { type: 'button', class: 'pa-toggle', 'aria-pressed': 'true' }, 'Picture wedge');
-  const btnData = el('button', { type: 'button', class: 'pa-toggle', 'aria-pressed': 'false' }, 'Data wedge');
+  const btnPicture = el('button', { type: 'button', class: 'pa-toggle', 'aria-pressed': 'true' }, 'Grid view');
+  const btnData = el('button', { type: 'button', class: 'pa-toggle', 'aria-pressed': 'false' }, 'List view');
   const selectAll = el('input', { type: 'checkbox', id: 'pa-all', 'aria-label': 'Select all visible' });
 
   const dialog = el('dialog', { class: 'pa-dialog', 'aria-labelledby': 'pa-note-title' });
@@ -233,11 +209,10 @@ export default async function decorate(block) {
   }
 
   function exportCsv(list, label) {
-    const head = ['Sequence', 'FOB', 'Style', 'Colour', 'Tier', 'Cluster', 'Planned units', 'Target units', 'Variance %', 'Doors', 'Wholesale cost', 'Extended retail', 'Note'];
+    const head = ['Sequence', 'FOB', 'Style', 'Colour', 'Tier', 'Cluster', 'Planned units', 'Doors', 'Wholesale cost', 'Extended retail', 'Note'];
     const lines = [head.map(csvCell).join(',')];
     list.forEach((i, n) => {
-      lines.push([n + 1, i.fob, i.name, i.color, i.tier, i.cluster, i.units, i.target,
-        variance(i.units, i.target).pct.toFixed(1), i.doors, (i.units * i.cost).toFixed(2),
+      lines.push([n + 1, i.fob, i.name, i.color, i.tier, i.cluster, i.units, i.doors, (i.units * i.cost).toFixed(2),
         (i.units * i.retail).toFixed(2), state.notes.get(i.id) || ''].map(csvCell).join(','));
     });
     const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8' });
@@ -304,13 +279,10 @@ export default async function decorate(block) {
   /* ---------- renderers ---------- */
   function renderKpis(list) {
     const t = totals(list);
-    const v = variance(t.units, t.target);
     const card = (label, value, extra) => el('div', { class: 'pa-kpi' },
       el('span', { class: 'pa-kpi-label' }, label), el('strong', { class: 'pa-kpi-value' }, value), extra);
     kpis.replaceChildren(
       card('Planned units', num.format(t.units)),
-      card('Target units', num.format(t.target)),
-      card('Plan vs target', `${num.format(v.diff)} units`, varChip(t.units, t.target)),
       card('Door placements', num.format(t.doors)),
       card('Wholesale cost', money.format(t.cost)),
       card('Extended retail', money.format(t.retail)),
@@ -340,14 +312,13 @@ export default async function decorate(block) {
     const table = el('table', { class: 'pa-pivot-table' },
       el('caption', {}, 'Units and door placements by tier and cluster. Select a cell to drill in.', fit('custom', 'PAP-3.5')),
       el('thead', {}, el('tr', {}, el('th', { scope: 'col' }, 'Tier'),
-        clusters.map((c) => el('th', { scope: 'col' }, c)), el('th', { scope: 'col' }, 'Total'), el('th', { scope: 'col' }, 'vs target'))),
+        clusters.map((c) => el('th', { scope: 'col' }, c)), el('th', { scope: 'col' }, 'Total'))),
       el('tbody', {}, tiers.map((tier) => {
         const row = items.filter((i) => i.tier === tier);
         const t = totals(row);
         return el('tr', {}, el('th', { scope: 'row' }, tier),
           clusters.map((c) => cellBtn(tier, c, row.filter((i) => i.cluster === c))),
-          el('td', { class: 'pa-total' }, num.format(t.units)),
-          el('td', {}, varChip(t.units, t.target)));
+          el('td', { class: 'pa-total' }, num.format(t.units)));
       })));
     pivot.replaceChildren(table);
   }
@@ -388,27 +359,15 @@ export default async function decorate(block) {
         el('span', { class: 'pa-color' }, it.color),
         el('span', { class: 'pa-meta' }, `${it.tier} · ${it.cluster}`),
         el('span', { class: 'pa-meta' }, `${num.format(it.units)} units · ${num.format(it.doors)} doors`),
-        el('span', { class: 'pa-meta' }, varChip(it.units, it.target), ` target ${num.format(it.target)}`),
         note ? el('p', { class: 'pa-note', title: note }, `Note: ${note}`) : null),
-      el('div', { class: 'pa-tile-actions' },
-        el('button', { type: 'button', class: 'pa-icon', disabled: dis || idx === 0, 'aria-label': `Move ${it.name} earlier`, onclick: () => move(it.id, -1) }, '←'),
-        el('button', { type: 'button', class: 'pa-icon', disabled: dis || idx === list.length - 1, 'aria-label': `Move ${it.name} later`, onclick: () => move(it.id, 1) }, '→'),
-        el('button', { type: 'button', class: 'pa-icon pa-icon-note', disabled: dis, 'aria-label': `${note ? 'Edit' : 'Add'} note for ${it.name}`, onclick: () => openNote([it.id]) }, note ? 'Edit note' : 'Note')));
+      dis ? null : el('div', { class: 'pa-tile-actions' },
+        el('button', { type: 'button', class: 'pa-icon', disabled: idx === 0, 'aria-label': `Move ${it.name} earlier`, onclick: () => move(it.id, -1) }, '←'),
+        el('button', { type: 'button', class: 'pa-icon', disabled: idx === list.length - 1, 'aria-label': `Move ${it.name} later`, onclick: () => move(it.id, 1) }, '→'),
+        el('button', { type: 'button', class: 'pa-icon pa-icon-note', 'aria-label': `${note ? 'Edit' : 'Add'} note for ${it.name}`, onclick: () => openNote([it.id]) }, note ? 'Edit note' : 'Note')));
   }
 
-  function groupsOf(list) {
-    if (state.group === 'none') return [['', list]];
-    const map = new Map();
-    list.forEach((i) => { const k = i[state.group]; if (!map.has(k)) map.set(k, []); map.get(k).push(i); });
-    return [...map.entries()].sort((a, b) => a[0].localeCompare(b[0]));
-  }
-
-  function groupHead(name, items) {
-    if (!name) return null;
-    const t = totals(items);
-    return el('h3', { class: 'pa-group' }, name,
-      el('span', {}, ` ${num.format(t.units)} units · ${money.format(t.retail)} retail `), varChip(t.units, t.target));
-  }
+  const groupsOf = (list) => [['', list]];
+  const groupHead = () => null;
 
   function renderPicture(list) {
     const nodes = [];
@@ -420,7 +379,7 @@ export default async function decorate(block) {
   }
 
   function renderData(list) {
-    const cols = ['', 'Seq', 'Style', 'Colour', 'FOB', 'Tier', 'Cluster', 'Units', 'Target', 'Var.', 'Doors', 'Wholesale', 'Ext. retail', 'Note'];
+    const cols = ['', 'Seq', 'Style', 'Colour', 'FOB', 'Tier', 'Cluster', 'Units', 'Doors', 'Wholesale', 'Ext. retail', 'Note'];
     const nodes = [];
     groupsOf(list).forEach(([name, items]) => {
       nodes.push(groupHead(name, items));
@@ -440,14 +399,16 @@ export default async function decorate(block) {
             el('td', {}, String(list.indexOf(it) + 1)),
             el('td', {}, it.url ? el('a', { href: it.url }, it.name) : it.name, ch ? el('span', { class: 'pa-flag pa-flag-inline' }, ch === 'add' ? 'Added' : 'Changed') : null),
             el('td', {}, it.color), el('td', {}, it.fob), el('td', {}, it.tier), el('td', {}, it.cluster),
-            el('td', { class: 'pa-num' }, num.format(it.units)), el('td', { class: 'pa-num' }, num.format(it.target)),
-            el('td', {}, varChip(it.units, it.target)), el('td', { class: 'pa-num' }, num.format(it.doors)),
+            el('td', { class: 'pa-num' }, num.format(it.units)),
+            el('td', { class: 'pa-num' }, num.format(it.doors)),
             el('td', { class: 'pa-num' }, money.format(it.units * it.cost)), el('td', { class: 'pa-num' }, money.format(it.units * it.retail)),
-            el('td', {}, el('button', { type: 'button', class: 'pa-link', disabled: !state.canEdit, onclick: () => openNote([it.id]) }, note ? note.slice(0, 28) + (note.length > 28 ? '…' : '') : 'Add')));
+            el('td', {}, state.canEdit
+              ? el('button', { type: 'button', class: 'pa-link', onclick: () => openNote([it.id]) }, note ? note.slice(0, 28) + (note.length > 28 ? '…' : '') : 'Add')
+              : (note || '')));
         })),
         el('tfoot', {}, el('tr', {},
-          el('td', { colspan: '7' }, 'Total'), el('td', { class: 'pa-num' }, num.format(t.units)), el('td', { class: 'pa-num' }, num.format(t.target)),
-          el('td', {}, varChip(t.units, t.target)), el('td', { class: 'pa-num' }, num.format(t.doors)),
+          el('td', { colspan: '7' }, 'Total'), el('td', { class: 'pa-num' }, num.format(t.units)),
+          el('td', { class: 'pa-num' }, num.format(t.doors)),
           el('td', { class: 'pa-num' }, money.format(t.cost)), el('td', { class: 'pa-num' }, money.format(t.retail)), el('td', {}))))));
     });
     return nodes;
@@ -458,7 +419,7 @@ export default async function decorate(block) {
     bulk.hidden = n === 0;
     bulk.replaceChildren(
       el('strong', {}, `${n} selected`),
-      el('button', { type: 'button', class: 'pa-btn', disabled: !state.canEdit, onclick: () => openNote([...state.selected]) }, 'Add note'),
+      state.canEdit ? el('button', { type: 'button', class: 'pa-btn', onclick: () => openNote([...state.selected]) }, 'Add note') : null,
       el('button', { type: 'button', class: 'pa-btn', onclick: () => exportCsv(state.items.filter((i) => state.selected.has(i.id)), 'selected') }, 'Export selected'),
       el('button', { type: 'button', class: 'pa-btn', onclick: () => { state.selected.clear(); render(); } }, 'Clear'),
       fit('custom', 'PAP-3.4'));
@@ -471,8 +432,6 @@ export default async function decorate(block) {
     fobSelect.replaceChildren(el('option', { value: 'all' }, 'All FOBs'), ...fobs().map((f) => el('option', { value: f }, f)));
     if (![...fobSelect.options].some((o) => o.value === state.fob)) state.fob = 'all';
     fobSelect.value = state.fob;
-    groupSelect.value = state.group;
-    roleSelect.value = state.canEdit ? 'edit' : 'view';
     btnPicture.setAttribute('aria-pressed', state.view === 'picture' ? 'true' : 'false');
     btnData.setAttribute('aria-pressed', state.view === 'data' ? 'true' : 'false');
     banner.hidden = !state.updateSummary;
@@ -492,8 +451,6 @@ export default async function decorate(block) {
 
   /* ---------- wire up ---------- */
   fobSelect.addEventListener('change', () => { state.fob = fobSelect.value; state.tier = ''; state.cluster = ''; render(); });
-  groupSelect.addEventListener('change', () => { state.group = groupSelect.value; render(); });
-  roleSelect.addEventListener('change', () => { state.canEdit = roleSelect.value === 'edit'; say(state.canEdit ? 'Edit permissions on.' : 'View-only: editing is switched off for this role.'); render(); });
   search.addEventListener('input', () => { state.q = search.value.trim(); render(); });
   btnPicture.addEventListener('click', () => { state.view = 'picture'; render(); });
   btnData.addEventListener('click', () => { state.view = 'data'; render(); });
@@ -501,11 +458,6 @@ export default async function decorate(block) {
     visible().forEach((i) => { if (selectAll.checked) state.selected.add(i.id); else state.selected.delete(i.id); });
     render();
   });
-
-  const fitBtn = el('button', { type: 'button', class: 'pa-btn', 'aria-pressed': 'false', onclick: () => {
-    const on = block.classList.toggle('pa-show-fit');
-    fitBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
-  } }, 'Show RFP fit labels');
 
   const head = el('div', { class: 'pa-head' },
     el('div', {},
@@ -515,14 +467,12 @@ export default async function decorate(block) {
     el('div', { class: 'pa-head-actions' },
       el('button', { type: 'button', class: 'pa-btn', onclick: simulateUpdate }, 'Simulate plan update'),
       el('button', { type: 'button', class: 'pa-btn', onclick: () => exportCsv(visible(), 'view') }, 'Export to Excel (CSV)'),
-      el('button', { type: 'button', class: 'pa-btn', onclick: share }, 'Copy share link'),
-      fitBtn));
+      el('button', { type: 'button', class: 'pa-btn', onclick: share }, 'Copy share link')));
 
   const controls = el('div', { class: 'pa-controls' },
-   el('div', { class: 'pa-view' }, btnPicture, btnData),
-   fobSelect, groupSelect, search, roleSelect,
-   el('label', { class: 'pa-all' }, selectAll, ' Select all'),
-   el('div', { class: 'pa-fit-group' }, fit('custom', 'PAP-3.1'), fit('ootb', 'PAP-3.3'), fit('custom', 'PAP-5.1')));
+    el('div', { class: 'pa-view' }, btnPicture, btnData),
+    fobSelect, search,
+    el('label', { class: 'pa-all' }, selectAll, ' Select all'));
 
   block.classList.add('pa-ready');
   block.replaceChildren(head, banner, kpis, pivot, chips, controls, bulk, status, content, dialog);
