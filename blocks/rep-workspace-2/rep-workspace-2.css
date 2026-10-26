@@ -1,0 +1,43 @@
+/*
+ * Rep Workspace 2: Ralph Lauren look, version 1.
+ * The original stylesheet is loaded first (see rep-workspace-2.js). Everything here uses
+ * ".rep-workspace.rep-workspace-2" so it wins over the original without !important.
+ */
+
+.rep-workspace.rep-workspace-2 {
+  /* brand palette: navy, warm ivory, saddle gold */
+  --rw-navy: rgb(13 27 58);
+  --rw-ivory: rgb(246 244 240);
+  --rw-gold: rgb(168 137 76);
+  --rw-ink: rgb(30 33 40);
+  --rw-muted: rgb(104 108 116);
+  --rw-line: rgb(13 27 58 / 14%);
+
+  /* the four stage colors, replaced with a quieter set: forest green, burgundy, heritage blue, saddle */
+  --rw-sales-green: rgb(31 74 56);
+  --rw-buyer-orange: rgb(160 112 52);
+  --rw-support-blue: rgb(46 74 122);
+  --rw-plan-purple: rgb(110 31 43);
+
+  /* typography: the same Didot/Bodoni serif as the storefront */
+  --rw-serif: 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+}
+
+/* sharper corners and a more editorial button */
+.rep-workspace.rep-workspace-2 .rw-button,
+.rep-workspace.rep-workspace-2 .rw-ghost {
+  border-radius: 2px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.rep-workspace.rep-workspace-2 .rw-button {
+  font-size: 0.85em;
+  font-weight: 500;
+}
+
+.rep-workspace.rep-workspace-2 h1,
+.rep-workspace.rep-workspace-2 h2,
+.rep-workspace.rep-workspace-2 h3 {
+  letter-spacing: 0.01em;
+}
