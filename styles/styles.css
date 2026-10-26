@@ -888,3 +888,62 @@ main .section.targeted-block-container .hero {
     grid-template-columns: minmax(0, 1fr);
   }
 }
+/* Shipping estimate under cart / checkout lines (add to the bottom of styles/styles.css) */
+.ship-est {
+  --ship-color: #1d5a1f;
+
+  box-sizing: border-box;
+  margin: 10px 0 0;
+  padding: 10px 12px;
+  border-left: 3px solid var(--ship-color);
+  background-color: #f5f4f2;
+  color: #0d1b3a;
+  font-size: 1.3rem;
+  line-height: 1.9rem;
+}
+
+.ship-est.ship-est-partial { --ship-color: #b26a00; }
+.ship-est.ship-est-backorder { --ship-color: #b3261e; }
+
+.ship-est p,
+.ship-est ul {
+  margin: 0;
+  padding: 0;
+}
+
+.ship-est-head {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ship-est-dot {
+  flex: none;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: var(--ship-color);
+}
+
+.ship-est-avail { color: #4a4a4a; }
+
+.ship-est-list {
+  margin-top: 4px;
+  list-style: none;
+}
+
+.ship-est-list li { margin: 0; }
+.ship-est-units { font-weight: 600; }
+
+.ship-est-meta,
+.ship-est-note {
+  margin-top: 4px;
+  font-size: 1.2rem;
+  color: #6b6b6b;
+}
+
+.ship-est-alt {
+  margin-top: 4px;
+  font-weight: 600;
+  color: #0d1b3a;
+}
