@@ -947,25 +947,35 @@ main .section.targeted-block-container .hero {
   font-weight: 600;
   color: #0d1b3a;
 }
-/* Welcome overlay on the personalized hero */
+/* Welcome overlay on the personalized hero (top left, floating) */
+.targeted-block main:has(> .hero-container + .section h1[id^='welcome-back']) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Hero image and welcome section share the same grid cell, so the box sits on the image */
+.targeted-block main > .hero-container,
 .targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) {
-  position: relative;
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) {
   z-index: 2;
-  height: 0;
-  margin: 0;
+  align-self: start;
+  justify-self: start;
+  margin: 48px 0 0 56px;
   padding: 0;
-  overflow: visible;
+  width: auto;
+  max-width: calc(100% - 112px);
 }
 
 .targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) > .default-content-wrapper {
-  position: absolute;
-  bottom: 40px;
-  left: 48px;
   box-sizing: border-box;
   width: max-content;
-  max-width: min(560px, calc(100% - 96px));
+  max-width: 100%;
   margin: 0;
-  padding: 24px 32px;
+  padding: 32px 44px;
   background-color: rgb(255 255 255 / 70%);
   -webkit-backdrop-filter: blur(14px) saturate(1.2);
   backdrop-filter: blur(14px) saturate(1.2);
@@ -977,7 +987,7 @@ main .section.targeted-block-container .hero {
 .targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) h1 {
   margin: 0;
   color: #0d1b3a;
-  font: 400 clamp(2.4rem, 3vw, 3.6rem) / 1.15 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+  font: 400 clamp(3rem, 4vw, 5.2rem) / 1.15 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
   letter-spacing: 0;
 }
 
@@ -986,18 +996,13 @@ main .section.targeted-block-container .hero {
   display: none;
 }
 
-/* Space below the hero for the section that follows */
-.targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) + .section {
-  margin-top: 32px;
-}
-
 @media (width < 700px) {
+  .targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) {
+    margin: 20px 0 0 16px;
+    max-width: calc(100% - 32px);
+  }
+
   .targeted-block main > .hero-container + .section:has(h1[id^='welcome-back']) > .default-content-wrapper {
-    right: 16px;
-    bottom: 16px;
-    left: 16px;
-    width: auto;
-    max-width: none;
-    padding: 16px 20px;
+    padding: 18px 22px;
   }
 }
