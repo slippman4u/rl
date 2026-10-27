@@ -1,0 +1,147 @@
+.cart-split {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 0 16px;
+  color: #0d1b3a;
+}
+
+.cart-split[hidden] {
+  display: none;
+}
+
+.cart-split .cs-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+  padding-top: 24px;
+  border-top: 1px solid #e5e3e0;
+}
+
+.cart-split p,
+.cart-split h2,
+.cart-split ul {
+  margin: 0;
+  padding: 0;
+}
+
+.cart-split .cs-label {
+  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.cart-split .cs-title {
+  margin-top: 4px;
+  font: 400 3rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+  color: #0d1b3a;
+}
+
+.cart-split .cs-sub {
+  margin-top: 4px;
+  font-size: 1.4rem;
+  color: #4a4a4a;
+}
+
+.cart-split .cs-seg {
+  display: inline-flex;
+  border: 1px solid #0d1b3a;
+}
+
+.cart-split .cs-seg-btn {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 0;
+  background: #fff;
+  color: #0d1b3a;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.cart-split .cs-seg-btn + .cs-seg-btn {
+  border-left: 1px solid #0d1b3a;
+}
+
+.cart-split .cs-seg-btn[aria-pressed='true'] {
+  background: #0d1b3a;
+  color: #fff;
+}
+
+.cart-split .cs-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.cart-split .cs-card {
+  box-sizing: border-box;
+  padding: 14px 16px;
+  background-color: #f0efed;
+  border-top: 3px solid #0d1b3a;
+  font-size: 1.3rem;
+  line-height: 1.8rem;
+}
+
+.cart-split .cs-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 8px;
+}
+
+.cart-split .cs-card-no {
+  font: 400 1.1rem/1.4rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #6b6b6b;
+}
+
+.cart-split .cs-card-name {
+  font-size: 1.6rem;
+}
+
+.cart-split .cs-card-city {
+  color: #6b6b6b;
+}
+
+.cart-split .cs-lines {
+  list-style: none;
+}
+
+.cart-split .cs-lines li {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 0;
+}
+
+.cart-split .cs-line-units {
+  font-weight: 600;
+}
+
+.cart-split .cs-card-foot {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #d9d6d1;
+  font-weight: 600;
+}
+
+.cart-split .cs-eta {
+  margin-top: 6px;
+  padding-left: 8px;
+  border-left: 3px solid #1d5a1f;
+  font-size: 1.2rem;
+  line-height: 1.7rem;
+}
+
+.cart-split .cs-eta-late {
+  border-left-color: #b26a00;
+}
+
+.cart-split .cs-note {
+  margin-top: 10px;
+  font-size: 1.2rem;
+  color: #6b6b6b;
+}
