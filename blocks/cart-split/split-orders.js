@@ -240,6 +240,10 @@ async function putBack(snapshot, jobs) {
   await emptyCart(cart);
   const all = jobs.flatMap((j) => itemsFor(j, snapshot));
   if (all.length) await addItems(cart.id, all);
+  const after = await readCart();
+  if (after.items.length !== all.length) {
+    throw new Error(`the cart holds ${after.items.length} line(s), expected ${all.length}. Sent: ${JSON.stringify(all)}`);
+  }
 }
 
 /**
