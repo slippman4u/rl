@@ -21,24 +21,58 @@ import '../../scripts/initializers/checkout.js';
  * the cart, and the error is passed up with the orders that did go through.
  */
 
-// Demo ship-to addresses for the five locations (made up). Edit freely.
-export const DOOR_ADDRESSES = {
-  D01: {
-    street: ['100 Showroom Way'], city: 'Chicago', region: 'IL', postcode: '60601', telephone: '312-555-0101',
-  },
-  D02: {
-    street: ['100 Showroom Way'], city: 'Boston', region: 'MA', postcode: '02116', telephone: '617-555-0102',
-  },
-  D03: {
-    street: ['100 Showroom Way'], city: 'Dallas', region: 'TX', postcode: '75201', telephone: '214-555-0103',
-  },
-  D04: {
-    street: ['100 Showroom Way'], city: 'Atlanta', region: 'GA', postcode: '30305', telephone: '404-555-0104',
-  },
-  D05: {
-    street: ['100 Showroom Way'], city: 'Seattle', region: 'WA', postcode: '98101', telephone: '206-555-0105',
-  },
-};
+/*
+ * Ship-to addresses come from the signed-in customer's SAVED addresses. Each location in
+ * cart-split.js has a "match" pattern that picks its saved address by name, street or city.
+ * The default billing address is used for billing on every order.
+ */
+const ADDRESS_FIELDS = `firstname lastname company street city
+  region { region_code region } postcode country_code telephone`;
+
+async function loadSavedAddresses() {
+  let data;
+  let withUid = true;
+  try {
+    data = await gql(`query { customer { addresses { uid default_billing ${ADDRESS_FIELDS} } } }`);
+  } catch (e) {
+    withUid = false; // older schema without uid: fall back to copying the address fields
+    data = await gql(`query { customer { addresses { default_billing ${ADDRESS_FIELDS} } } }`);
+  }
+  return (data?.customer?.addresses || []).map((a) => ({
+    uid: withUid ? a.uid : '',
+    isBilling: !!a.default_billing,
+    text: [a.firstname, a.lastname, a.company, ...(a.street || []), a.city, a.region?.region]
+      .filter(Boolean).join(' ').toLowerCase(),
+    fields: {
+      firstname: a.firstname,
+      lastname: a.lastname,
+      company: a.company || undefined,
+      street: a.street,
+      city: a.city,
+      region: a.region?.region_code || a.region?.region,
+      postcode: a.postcode,
+      country_code: a.country_code,
+      telephone: a.telephone,
+      save_in_address_book: false,
+    },
+  }));
+}
+
+/** The saved address for each location, or an error that lists what was found. */
+function resolveAddresses(saved, doors) {
+  const map = new Map();
+  doors.forEach((d) => {
+    const hit = saved.find((a) => d.match && d.match.test(a.text));
+    if (!hit) {
+      throw new Error(`No saved address matches "${d.name}". Saved addresses found: ${saved.map((a) => a.text).join(' | ') || 'none'}`);
+    }
+    map.set(d.id, hit);
+  });
+  const billing = saved.find((a) => a.isBilling) || saved[0];
+  return { map, billing };
+}
+
+const addressInput = (a) => (a.uid ? { customer_address_uid: a.uid } : { address: a.fields });
 
 async function gql(query, variables) {
   const res = await CORE_FETCH_GRAPHQL.fetchGraphQl(query, { method: 'POST', variables });
@@ -46,15 +80,18 @@ async function gql(query, variables) {
   return res.data;
 }
 
+// Cloud Service carts expose their lines as itemsV2 (there is no plain "items" field).
 const CART_QUERY = `query {
   customerCart {
     id
-    items {
-      uid
-      quantity
-      product { sku }
-      ... on ConfigurableCartItem {
-        configurable_options { configurable_product_option_value_uid }
+    itemsV2(pageSize: 100, currentPage: 1) {
+      items {
+        uid
+        quantity
+        product { sku }
+        ... on ConfigurableCartItem {
+          configured_variant { sku }
+        }
       }
     }
   }
@@ -64,7 +101,7 @@ async function readCart() {
   const data = await gql(CART_QUERY);
   const cart = data?.customerCart;
   if (!cart?.id) throw new Error('Could not read the active cart');
-  return cart;
+  return { id: cart.id, items: cart.itemsV2?.items || [] };
 }
 
 async function emptyCart(cart) {
@@ -96,8 +133,8 @@ function snapshotOf(cart) {
   const byUid = new Map();
   cart.items.forEach((i) => {
     byUid.set(i.uid, {
-      sku: i.product.sku,
-      selected_options: (i.configurable_options || []).map((o) => o.configurable_product_option_value_uid),
+      sku: i.product.sku, // parent SKU
+      variant: i.configured_variant?.sku || '', // the chosen color/size, for configurable products
     });
   });
   return byUid;
@@ -107,16 +144,24 @@ function itemsFor(job, snapshot) {
   return job.lines.map((l) => {
     const base = snapshot.get(l.key);
     if (!base) throw new Error(`Could not match "${l.name}" to a line in the cart`);
-    const item = { sku: base.sku, quantity: l.units };
-    if (base.selected_options.length) item.selected_options = base.selected_options;
-    return item;
+    // a configurable product is added by its variant SKU together with the parent SKU
+    if (base.variant) return { sku: base.variant, parent_sku: base.sku, quantity: l.units };
+    return { sku: base.sku, quantity: l.units };
   });
 }
 
-async function setAddress(cartId, door) {
-  const a = DOOR_ADDRESSES[door.id];
-  if (!a) throw new Error(`No address for ${door.name}`);
-  const data = await gql(
+/** Try the saved address by ID first, then by copying its fields. */
+async function withAddress(address, send) {
+  try {
+    return await send(addressInput(address));
+  } catch (error) {
+    if (!address.uid) throw error;
+    return send({ address: address.fields });
+  }
+}
+
+async function setAddress(cartId, shipTo, billTo) {
+  const data = await withAddress(shipTo, (input) => gql(
     `mutation($input: SetShippingAddressesOnCartInput) {
       setShippingAddressesOnCart(input: $input) {
         cart {
@@ -126,32 +171,14 @@ async function setAddress(cartId, door) {
         }
       }
     }`,
-    {
-      input: {
-        cart_id: cartId,
-        shipping_addresses: [{
-          address: {
-            firstname: 'Receiving',
-            lastname: door.name,
-            company: door.name,
-            street: a.street,
-            city: a.city,
-            region: a.region,
-            postcode: a.postcode,
-            country_code: 'US',
-            telephone: a.telephone,
-            save_in_address_book: false,
-          },
-        }],
-      },
-    },
-  );
-  await gql(
+    { input: { cart_id: cartId, shipping_addresses: [input] } },
+  ));
+  await withAddress(billTo, (input) => gql(
     `mutation($input: SetBillingAddressOnCartInput) {
       setBillingAddressOnCart(input: $input) { cart { id } }
     }`,
-    { input: { cart_id: cartId, billing_address: { same_as_shipping: true } } },
-  );
+    { input: { cart_id: cartId, billing_address: input } },
+  ));
   return data?.setShippingAddressesOnCart?.cart?.shipping_addresses?.[0]?.available_shipping_methods || [];
 }
 
@@ -224,6 +251,7 @@ async function putBack(snapshot, jobs) {
  */
 export async function placeRealOrders({ plan, config = {}, onStep }) {
   const jobs = plan.filter((p) => p.units > 0);
+  const addresses = resolveAddresses(await loadSavedAddresses(), jobs.map((j) => j.door));
   const first = await readCart();
   const snapshot = snapshotOf(first);
   const done = [];
@@ -241,7 +269,7 @@ export async function placeRealOrders({ plan, config = {}, onStep }) {
       await addItems(cart.id, itemsFor(job, snapshot));
 
       say('Setting the ship-to address');
-      const shippingMethods = await setAddress(cart.id, job.door);
+      const shippingMethods = await setAddress(cart.id, addresses.map.get(job.door.id), addresses.billing);
 
       say('Choosing a shipping method');
       const paymentMethods = await setShipping(cart.id, shippingMethods, config.shipping);
