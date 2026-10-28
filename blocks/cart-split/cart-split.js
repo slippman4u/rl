@@ -11,7 +11,7 @@ import '../../scripts/initializers/cart.js';
  * changes nothing in Commerce. Step 2 replaces placeOrders() below with real order placement.
  * Locations, shares and transit days are demo values: edit DOORS.
  */
-const DOORS = [
+const ALL_DOORS = [
   {
     id: 'D01', name: 'Chicago Flagship', city: 'Chicago, IL', share: 24, transit: 3,
   },
@@ -28,6 +28,13 @@ const DOORS = [
     id: 'D05', name: 'Seattle Downtown', city: 'Seattle, WA', share: 12, transit: 5,
   },
 ];
+
+// The locations in use: the first N of ALL_DOORS (the "Locations" row of the block table).
+let DOORS = ALL_DOORS;
+export const useLocations = (n) => {
+  DOORS = ALL_DOORS.slice(0, Math.max(1, Math.min(ALL_DOORS.length, Math.floor(Number(n)) || ALL_DOORS.length)));
+  return DOORS;
+};
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const num = new Intl.NumberFormat('en-US');
@@ -78,17 +85,36 @@ export function linesOf(cart) {
     .filter((l) => l.qty > 0);
 }
 
+// How a line is assigned before the buyer touches it: spread by door share, all in the first
+// location, or nothing assigned (the "Start" row of the block table).
+let START = 'spread';
+export const useStart = (mode) => {
+  START = ['spread', 'first', 'empty'].includes(mode) ? mode : 'spread';
+};
+
+function startingSplit(qty) {
+  let parts;
+  if (START === 'empty') parts = DOORS.map(() => 0);
+  else if (START === 'first') parts = DOORS.map((d, i) => (i === 0 ? qty : 0));
+  else parts = apportion(qty, DOORS.map((d) => d.share));
+  parts.qty = qty;
+  return parts;
+}
+
 /**
  * Keep the buyer's assignments across cart updates. A line whose assignments still add up
  * to its quantity is kept; any other line is spread by door share.
  */
 export function syncAllocation(alloc, lines) {
   const next = new Map();
-  const weights = DOORS.map((d) => d.share);
   lines.forEach((l) => {
     const old = alloc.get(l.key);
-    const total = old ? old.reduce((a, b) => a + b, 0) : -1;
-    next.set(l.key, old && total === l.qty ? old : apportion(l.qty, weights));
+    // keep the buyer's assignment while the line's quantity is unchanged
+    if (old && old.qty === l.qty) {
+      next.set(l.key, old);
+    } else {
+      next.set(l.key, startingSplit(l.qty));
+    }
   });
   return next;
 }
@@ -168,18 +194,25 @@ function arrival(label, ship, transit) {
 export default function decorate(block) {
   /*
    * Block table options (all optional):
+   *   Locations       how many locations to show, 1 to 5 (default 5)
+   *   Start           spread (by door share, default), first (all in the first location)
+   *                   or empty (nothing assigned until the buyer does it)
    *   Mode            simulate (default) or real
-   *   Real Limit      most locations allowed in real mode while testing (default 2)
    *   Payment Method  payment code to use in real mode (default checkmo)
    *   Shipping Method carrier_method to use in real mode (default flatrate_flatrate)
    */
   const raw = readBlockConfig(block);
   const cfg = {
     real: String(raw.mode || '').toLowerCase() === 'real',
-    limit: Math.max(1, Math.floor(Number(raw['real-limit']) || 2)),
+    locations: Number(raw.locations) || 5,
+    start: ['spread', 'first', 'empty'].includes(String(raw.start || '').toLowerCase())
+      ? String(raw.start).toLowerCase()
+      : 'spread',
     payment: String(raw['payment-method'] || 'checkmo'),
     shipping: String(raw['shipping-method'] || 'flatrate_flatrate'),
   };
+  useLocations(cfg.locations);
+  useStart(cfg.start);
   const state = {
     lines: [],
     alloc: new Map(),
@@ -203,6 +236,7 @@ export default function decorate(block) {
     const current = [...(state.alloc.get(key) || DOORS.map(() => 0))];
     const n = Math.max(0, Math.min(line.qty, Math.floor(Number(value) || 0)));
     current[doorIndex] = n;
+    current.qty = line.qty;
     state.alloc.set(key, current);
     state.result = null;
     paint();
@@ -437,8 +471,7 @@ export default function decorate(block) {
     const total = plan.reduce((a, p) => a + p.units, 0);
     const value = plan.reduce((a, p) => a + p.value, 0);
     const usedDoors = plan.filter((p) => p.units > 0).length;
-    const overLimit = cfg.real && usedDoors > cfg.limit;
-    const ready = rem.every((r) => r.left === 0) && usedDoors > 0 && !overLimit;
+    const ready = rem.every((r) => r.left === 0) && usedDoors > 0;
 
     const head = el('div', 'cs-head');
     const title = el('div');
@@ -448,7 +481,7 @@ export default function decorate(block) {
       el('p', 'cs-sub', `${num.format(total)} units · ${money.format(value)} · each location gets its own order, PO and invoice`),
     );
     const tools = el('div', 'cs-tools');
-    const reset = el('button', 'cs-btn', 'Reset to door shares');
+    const reset = el('button', 'cs-btn', cfg.start === 'spread' ? 'Reset to door shares' : 'Reset assignments');
     reset.type = 'button';
     reset.addEventListener('click', resetShares);
     const all = el('button', 'cs-btn', state.open.size === DOORS.length ? 'Collapse all' : 'Expand all');
@@ -470,9 +503,7 @@ export default function decorate(block) {
     place1.disabled = !ready || state.placing;
     place1.addEventListener('click', () => place(plan));
     foot.append(place1);
-    if (overLimit && !state.placing) {
-      foot.append(el('span', 'cs-foot-hint', `Real orders are limited to ${cfg.limit} locations while testing. Assign everything to ${cfg.limit} locations.`));
-    } else if (!ready && !state.placing) {
+    if (!ready && !state.placing) {
       foot.append(el('span', 'cs-foot-hint', 'Assign every unit to a location to continue.'));
     }
 
