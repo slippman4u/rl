@@ -31,6 +31,9 @@ export const useLocations = (n) => {
   return DOORS;
 };
 
+// sessionStorage key the home page "Reorder all" button writes (see last-split-order block)
+const PREFILL_KEY = 'cart-split-prefill';
+
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const num = new Intl.NumberFormat('en-US');
 const fmtDate = new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' });
@@ -109,6 +112,36 @@ export function syncAllocation(alloc, lines) {
       next.set(l.key, old);
     } else {
       next.set(l.key, startingSplit(l.qty));
+    }
+  });
+  return next;
+}
+
+/**
+ * Fill the assignments from an earlier split order ("Reorder all 3"). The prefill is a list of
+ * { address, items: [{ skus: [...], name, qty }] }, one entry per past order. Each entry goes to
+ * the location whose "match" pattern fits its address. A line is only filled when its past
+ * quantities add up to the cart quantity; anything else keeps its normal starting split.
+ */
+export function applyPrefill(lines, alloc, prefill) {
+  const next = new Map(alloc);
+  next.matched = 0; // how many cart lines were filled from the earlier split
+  const norm = (s) => String(s || '').toLowerCase().trim();
+  lines.forEach((l) => {
+    const per = DOORS.map(() => 0);
+    (prefill || []).forEach((entry) => {
+      const doorIndex = DOORS.findIndex((d) => d.match && d.match.test(norm(entry.address)));
+      if (doorIndex < 0) return;
+      (entry.items || []).forEach((it) => {
+        const same = (it.skus || []).some((s) => norm(s) && norm(s) === norm(l.sku))
+          || (norm(it.name) && (norm(l.name).startsWith(norm(it.name)) || norm(it.name).startsWith(norm(l.name))));
+        if (same) per[doorIndex] += Math.max(0, Math.floor(Number(it.qty) || 0));
+      });
+    });
+    if (per.reduce((a, b) => a + b, 0) === l.qty) {
+      per.qty = l.qty;
+      next.set(l.key, per);
+      next.matched += 1;
     }
   });
   return next;
@@ -523,6 +556,19 @@ export default function decorate(block) {
     } else {
       state.lines = linesOf(cart);
       state.alloc = syncAllocation(state.alloc, state.lines);
+      // "Reorder all N" on the home page leaves the earlier split here: use it once
+      try {
+        const saved = window.sessionStorage.getItem(PREFILL_KEY);
+        if (saved) {
+          const filled = applyPrefill(state.lines, state.alloc, JSON.parse(saved));
+          if (filled.matched > 0) {
+            state.alloc = filled;
+            state.open = new Set(DOORS.map((d, i) => i));
+          }
+          // keep the saved split until every line has been matched (the cart may still be loading)
+          if (filled.matched === state.lines.length) window.sessionStorage.removeItem(PREFILL_KEY);
+        }
+      } catch (e) { /* no saved split, or storage is blocked */ }
     }
     paint();
   }
@@ -540,4 +586,3 @@ export default function decorate(block) {
     applyCart(cart);
   }, { eager: true });
 }
-
