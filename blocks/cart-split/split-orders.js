@@ -266,7 +266,13 @@ export async function placeRealOrders({ plan, config = {}, onStep }) {
       const cart = i === 0 ? first : await readCart();
       say(`Cart ${cart.id.slice(0, 8)}: adding products`);
       await emptyCart(cart);
-      await addItems(cart.id, itemsFor(job, snapshot));
+      const toAdd = itemsFor(job, snapshot);
+      await addItems(cart.id, toAdd);
+      const check = await readCart();
+      say(`Cart now holds ${check.items.length} line(s), expected ${toAdd.length}`);
+      if (check.id !== cart.id || check.items.length !== toAdd.length) {
+        throw new Error(`The cart holds ${check.items.length} line(s) after adding, expected ${toAdd.length}. Sent: ${JSON.stringify(toAdd)}`);
+      }
 
       say('Setting the ship-to address');
       const shippingMethods = await setAddress(cart.id, addresses.map.get(job.door.id), addresses.billing);
