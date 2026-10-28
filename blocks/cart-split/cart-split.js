@@ -394,7 +394,7 @@ export default function decorate(block) {
           text = `${p.door.name}: order ${p.order.number} placed`;
         } else if (p.state === 'failed') {
           cls = 'is-failed';
-          text = `${p.door.name}: failed`;
+          text = `${p.door.name}: failed${p.note ? ` - ${p.note}` : ''}`;
         }
         ul.append(el('li', cls, text));
       });
