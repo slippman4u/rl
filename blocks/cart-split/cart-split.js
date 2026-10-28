@@ -127,23 +127,39 @@ export function applyPrefill(lines, alloc, prefill) {
   const next = new Map(alloc);
   next.matched = 0; // how many cart lines were filled from the earlier split
   const norm = (s) => String(s || '').toLowerCase().trim();
-  lines.forEach((l) => {
-    const per = DOORS.map(() => 0);
-    (prefill || []).forEach((entry) => {
-      const doorIndex = DOORS.findIndex((d) => d.match && d.match.test(norm(entry.address)));
-      if (doorIndex < 0) return;
-      (entry.items || []).forEach((it) => {
-        const same = (it.skus || []).some((s) => norm(s) && norm(s) === norm(l.sku))
-          || (norm(it.name) && (norm(l.name).startsWith(norm(it.name)) || norm(it.name).startsWith(norm(l.name))));
-        if (same) per[doorIndex] += Math.max(0, Math.floor(Number(it.qty) || 0));
-      });
+  const perLine = new Map(lines.map((l) => [l.key, DOORS.map(() => 0)]));
+
+  // each past order item lands on exactly one cart line: variant SKU, else name, never a guess
+  const lineFor = (it) => {
+    const skus = (it.skus || []).map(norm).filter(Boolean);
+    const bySku = lines.filter((l) => skus[0] && norm(l.sku) === skus[0]);
+    if (bySku.length === 1) return bySku[0];
+    const byAnySku = lines.filter((l) => skus.includes(norm(l.sku)));
+    if (byAnySku.length === 1) return byAnySku[0];
+    const byName = lines.filter((l) => norm(it.name) && norm(l.name) === norm(it.name));
+    if (byName.length === 1) return byName[0];
+    return null;
+  };
+
+  (prefill || []).forEach((entry) => {
+    const doorIndex = DOORS.findIndex((d) => d.match && d.match.test(norm(entry.address)));
+    if (doorIndex < 0) return;
+    (entry.items || []).forEach((it) => {
+      const line = lineFor(it);
+      if (line) perLine.get(line.key)[doorIndex] += Math.max(0, Math.floor(Number(it.qty) || 0));
     });
+  });
+
+  lines.forEach((l) => {
+    const per = perLine.get(l.key);
     if (per.reduce((a, b) => a + b, 0) === l.qty) {
       per.qty = l.qty;
       next.set(l.key, per);
       next.matched += 1;
     }
   });
+  // eslint-disable-next-line no-console
+  console.debug('Split prefill', { lines: lines.map((l) => [l.sku, l.name, l.qty]), prefill, matched: next.matched });
   return next;
 }
 
