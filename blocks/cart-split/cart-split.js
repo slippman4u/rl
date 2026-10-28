@@ -253,8 +253,6 @@ export default function decorate(block) {
   }
 
   async function place(plan) {
-    const count = plan.filter((p) => p.units > 0).length;
-    if (cfg.real && !window.confirm(`This places ${count} real orders in Commerce, one per location. Continue?`)) return;
     state.placing = true;
     state.busy = true;
     state.progress = [];
@@ -456,8 +454,7 @@ export default function decorate(block) {
         only.push(errorPanel());
         if (state.log.length) only.push(logPanel());
       } else {
-        only.push(resultPanel(state.result, `${state.result.length} orders placed`));
-        if (state.log.length) only.push(logPanel());
+        only.push(resultPanel(state.result, state.result.length === 1 ? '1 order placed' : `${state.result.length} orders placed`));
       }
       block.replaceChildren(...only);
       block.hidden = false;
@@ -495,8 +492,7 @@ export default function decorate(block) {
     plan.forEach((row, i) => accordion.append(section(row, i)));
 
     const foot = el('div', 'cs-foot');
-    const kind = cfg.real ? 'real' : 'split';
-    const place1 = el('button', 'cs-place', state.placing ? 'Placing orders...' : `Place ${usedDoors} ${kind} orders`);
+    const place1 = el('button', 'cs-place', state.placing ? 'Placing orders...' : 'Checkout');
     place1.type = 'button';
     place1.disabled = !ready || state.placing;
     place1.addEventListener('click', () => place(plan));
@@ -509,10 +505,8 @@ export default function decorate(block) {
     if (state.progress.length) parts.push(progressList());
     if (state.error) parts.push(errorPanel());
     if (state.partial.length) parts.push(resultPanel(state.partial, `${state.partial.length} orders placed before it stopped`));
-    if (state.log.length) parts.push(logPanel());
-    parts.push(el('p', 'cs-note', cfg.real
-      ? 'Real mode: each location places a real order in Commerce. Locations and shares are demo values.'
-      : 'Locations, shares and dates are demo values. Prices shown are the cart prices.'));
+    if (state.error && state.log.length) parts.push(logPanel()); // step log only shows when something fails
+    if (!cfg.real) parts.push(el('p', 'cs-note', 'Locations, shares and dates are demo values. Prices shown are the cart prices.'));
     block.replaceChildren(...parts);
     block.hidden = false;
 
