@@ -540,3 +540,4 @@ export default function decorate(block) {
     applyCart(cart);
   }, { eager: true });
 }
+
