@@ -166,14 +166,31 @@ function arrival(label, ship, transit) {
 }
 
 export default function decorate(block) {
-  readBlockConfig(block); // reserved for future options
+  /*
+   * Block table options (all optional):
+   *   Mode            simulate (default) or real
+   *   Real Limit      most locations allowed in real mode while testing (default 2)
+   *   Payment Method  payment code to use in real mode (default checkmo)
+   *   Shipping Method carrier_method to use in real mode (default flatrate_flatrate)
+   */
+  const raw = readBlockConfig(block);
+  const cfg = {
+    real: String(raw.mode || '').toLowerCase() === 'real',
+    limit: Math.max(1, Math.floor(Number(raw['real-limit']) || 2)),
+    payment: String(raw['payment-method'] || 'checkmo'),
+    shipping: String(raw['shipping-method'] || 'flatrate_flatrate'),
+  };
   const state = {
     lines: [],
     alloc: new Map(),
     open: new Set([0]),
     progress: [],
+    log: [],
     result: null,
+    error: '',
+    partial: [],
     placing: false,
+    busy: false, // while orders are placed the cart changes under us, so ignore cart updates
   };
 
   block.classList.add('cs-ready');
@@ -199,19 +216,51 @@ export default function decorate(block) {
     paint();
   }
 
+  function onStep(p) {
+    state.progress = state.progress.filter((x) => x.index !== p.index);
+    state.progress.push(p);
+    if (p.note) state.log.push(`${p.door.name}: ${p.note}`);
+    paint();
+  }
+
   async function place(plan) {
+    const count = plan.filter((p) => p.units > 0).length;
+    if (cfg.real && !window.confirm(`This places ${count} real orders in Commerce, one per location. Continue?`)) return;
     state.placing = true;
+    state.busy = true;
     state.progress = [];
+    state.log = [];
     state.result = null;
+    state.error = '';
+    state.partial = [];
     paint();
-    const done = await placeOrders(plan, (p) => {
-      state.progress = state.progress.filter((x) => x.index !== p.index);
-      state.progress.push(p);
+    try {
+      if (cfg.real) {
+        const { placeRealOrders } = await import('./split-orders.js');
+        state.result = await placeRealOrders({
+          plan,
+          config: { payment: cfg.payment, shipping: cfg.shipping },
+          onStep,
+        });
+        state.lines = [];
+        state.alloc = new Map();
+      } else {
+        state.result = await placeOrders(plan, onStep);
+      }
+    } catch (e) {
+      // eslint-disable-next-line no-console
+      console.error('Split orders failed', e);
+      state.error = e.message || 'Something went wrong';
+      state.partial = e.completed || [];
+      // the cart was put back, so show what it holds now
+      const latest = events.lastPayload('cart/data');
+      state.lines = latest && Number(latest.totalQuantity) > 0 ? linesOf(latest) : [];
+      state.alloc = syncAllocation(new Map(), state.lines);
+    } finally {
+      state.placing = false;
+      state.busy = false;
       paint();
-    });
-    state.placing = false;
-    state.result = done;
-    paint();
+    }
   }
 
   function statusBar(rem) {
@@ -308,33 +357,78 @@ export default function decorate(block) {
     state.progress
       .sort((a, b) => a.index - b.index)
       .forEach((p) => {
-        ul.append(el('li', p.state === 'done' ? 'is-done' : 'is-working', p.state === 'done'
-          ? `${p.door.name}: order ${p.order.number} placed`
-          : `${p.door.name}: placing order...`));
+        let cls = 'is-working';
+        let text = `${p.door.name}: placing order...`;
+        if (p.state === 'done') {
+          cls = 'is-done';
+          text = `${p.door.name}: order ${p.order.number} placed`;
+        } else if (p.state === 'failed') {
+          cls = 'is-failed';
+          text = `${p.door.name}: failed`;
+        }
+        ul.append(el('li', cls, text));
       });
     return ul;
   }
 
-  function resultPanel() {
+  function logPanel() {
+    const d = el('details', 'cs-log');
+    d.open = !!state.error;
+    d.append(el('summary', '', 'Step log'));
+    const ul = el('ul');
+    state.log.forEach((line) => ul.append(el('li', '', line)));
+    d.append(ul);
+    return d;
+  }
+
+  function resultPanel(orders, title) {
     const box = el('div', 'cs-result');
-    box.append(el('h3', 'cs-result-title', `${state.result.length} orders placed`));
+    box.append(el('h3', 'cs-result-title', title));
     const grid = el('div', 'cs-result-grid');
-    state.result.forEach((o) => {
+    orders.forEach((o) => {
       const c = el('div', 'cs-result-card');
       c.append(
         el('strong', '', o.number),
         el('span', '', o.door.name),
         el('span', '', `${num.format(o.units)} units · ${money.format(o.value)}`),
+        o.kind ? el('span', 'cs-result-kind', o.kind) : null,
       );
       grid.append(c);
     });
-    box.append(grid, el('p', 'cs-note', 'Simulated. Nothing was placed in Commerce.'));
+    box.append(grid);
+    if (!cfg.real) box.append(el('p', 'cs-note', 'Simulated. Nothing was placed in Commerce.'));
+    return box;
+  }
+
+  function errorPanel() {
+    const box = el('div', 'cs-error');
+    box.setAttribute('role', 'alert');
+    box.append(el('strong', '', 'The split orders stopped'));
+    box.append(el('p', '', state.error));
+    box.append(el('p', 'cs-note', state.partial.length
+      ? `${state.partial.length} order(s) were already placed. The products for the rest are back in the cart.`
+      : 'No orders were placed. Your cart was put back as it was.'));
     return box;
   }
 
   function paint() {
-    if (!state.lines.length) {
+    const showing = state.lines.length || state.result || state.error;
+    if (!showing) {
       block.hidden = true;
+      return;
+    }
+    if (!state.lines.length) {
+      const only = [];
+      if (state.error) {
+        if (state.partial.length) only.push(resultPanel(state.partial, `${state.partial.length} orders placed before it stopped`));
+        only.push(errorPanel());
+        if (state.log.length) only.push(logPanel());
+      } else {
+        only.push(resultPanel(state.result, `${state.result.length} orders placed`));
+        if (state.log.length) only.push(logPanel());
+      }
+      block.replaceChildren(...only);
+      block.hidden = false;
       return;
     }
     const focusKey = document.activeElement?.dataset?.k;
@@ -343,7 +437,8 @@ export default function decorate(block) {
     const total = plan.reduce((a, p) => a + p.units, 0);
     const value = plan.reduce((a, p) => a + p.value, 0);
     const usedDoors = plan.filter((p) => p.units > 0).length;
-    const ready = rem.every((r) => r.left === 0) && usedDoors > 0;
+    const overLimit = cfg.real && usedDoors > cfg.limit;
+    const ready = rem.every((r) => r.left === 0) && usedDoors > 0 && !overLimit;
 
     const head = el('div', 'cs-head');
     const title = el('div');
@@ -369,17 +464,26 @@ export default function decorate(block) {
     plan.forEach((row, i) => accordion.append(section(row, i)));
 
     const foot = el('div', 'cs-foot');
-    const place1 = el('button', 'cs-place', state.placing ? 'Placing orders...' : `Place ${usedDoors} split orders`);
+    const kind = cfg.real ? 'real' : 'split';
+    const place1 = el('button', 'cs-place', state.placing ? 'Placing orders...' : `Place ${usedDoors} ${kind} orders`);
     place1.type = 'button';
     place1.disabled = !ready || state.placing;
     place1.addEventListener('click', () => place(plan));
     foot.append(place1);
-    if (!ready && !state.placing) foot.append(el('span', 'cs-foot-hint', 'Assign every unit to a location to continue.'));
+    if (overLimit && !state.placing) {
+      foot.append(el('span', 'cs-foot-hint', `Real orders are limited to ${cfg.limit} locations while testing. Assign everything to ${cfg.limit} locations.`));
+    } else if (!ready && !state.placing) {
+      foot.append(el('span', 'cs-foot-hint', 'Assign every unit to a location to continue.'));
+    }
 
     const parts = [head, statusBar(rem), accordion, foot];
-    if (state.progress.length && !state.result) parts.push(progressList());
-    if (state.result) parts.push(resultPanel());
-    parts.push(el('p', 'cs-note', 'Locations, shares and dates are demo values. Prices shown are the cart prices.'));
+    if (state.progress.length) parts.push(progressList());
+    if (state.error) parts.push(errorPanel());
+    if (state.partial.length) parts.push(resultPanel(state.partial, `${state.partial.length} orders placed before it stopped`));
+    if (state.log.length) parts.push(logPanel());
+    parts.push(el('p', 'cs-note', cfg.real
+      ? 'Real mode: each location places a real order in Commerce. Locations and shares are demo values.'
+      : 'Locations, shares and dates are demo values. Prices shown are the cart prices.'));
     block.replaceChildren(...parts);
     block.hidden = false;
 
@@ -389,15 +493,27 @@ export default function decorate(block) {
     }
   }
 
-  events.on('cart/data', (cart) => {
+  function applyCart(cart) {
     const empty = !cart || !(Number(cart.totalQuantity) > 0);
     if (empty) {
       state.lines = [];
-      block.hidden = true;
-      return;
+    } else {
+      state.lines = linesOf(cart);
+      state.alloc = syncAllocation(state.alloc, state.lines);
     }
-    state.lines = linesOf(cart);
-    state.alloc = syncAllocation(state.alloc, state.lines);
     paint();
+  }
+
+  events.on('cart/data', (cart) => {
+    if (state.busy) return; // orders are being placed: the cart is changing on purpose
+    if (cart && Number(cart.totalQuantity) > 0) {
+      // the cart has products again, so an old result no longer applies
+      state.result = null;
+      state.error = '';
+      state.partial = [];
+      state.progress = [];
+      state.log = [];
+    }
+    applyCart(cart);
   }, { eager: true });
 }
