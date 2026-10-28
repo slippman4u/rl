@@ -1,0 +1,84 @@
+.last-split-order {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  padding: 0 16px;
+  color: #0d1b3a;
+}
+
+.last-split-order[hidden] {
+  display: none;
+}
+
+.last-split-order .lso-card {
+  padding: 24px;
+  border: 1px solid #d9d6d1;
+  border-top: 3px solid #0d1b3a;
+  background: #f0efed;
+}
+
+.last-split-order p,
+.last-split-order h2,
+.last-split-order ul {
+  margin: 0;
+  padding: 0;
+}
+
+.last-split-order .lso-label {
+  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.last-split-order .lso-title {
+  margin-top: 4px;
+  font: 400 3rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+}
+
+.last-split-order .lso-sub {
+  margin-top: 4px;
+  font-size: 1.4rem;
+  color: #4a4a4a;
+}
+
+.last-split-order .lso-list {
+  margin-top: 12px;
+  list-style: none;
+  font-size: 1.4rem;
+  line-height: 2.4rem;
+}
+
+.last-split-order .lso-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.last-split-order .lso-button {
+  padding: 12px 28px;
+  border: 1px solid #0d1b3a;
+  border-radius: 0;
+  background: #0d1b3a;
+  color: #fff;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.last-split-order .lso-button:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.last-split-order .lso-link {
+  font-size: 1.4rem;
+  color: #0d1b3a;
+}
+
+.last-split-order .lso-status {
+  margin-top: 10px;
+  font-size: 1.3rem;
+  color: #b3261e;
+}
