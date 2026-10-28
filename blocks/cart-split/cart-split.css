@@ -9,6 +9,14 @@
   display: none;
 }
 
+.cart-split p,
+.cart-split h2,
+.cart-split h3,
+.cart-split ul {
+  margin: 0;
+  padding: 0;
+}
+
 .cart-split .cs-head {
   display: flex;
   flex-wrap: wrap;
@@ -18,13 +26,6 @@
   margin-bottom: 16px;
   padding-top: 24px;
   border-top: 1px solid #e5e3e0;
-}
-
-.cart-split p,
-.cart-split h2,
-.cart-split ul {
-  margin: 0;
-  padding: 0;
 }
 
 .cart-split .cs-label {
@@ -45,14 +46,14 @@
   color: #4a4a4a;
 }
 
-.cart-split .cs-seg {
-  display: inline-flex;
-  border: 1px solid #0d1b3a;
+.cart-split .cs-tools {
+  display: flex;
+  gap: 8px;
 }
 
-.cart-split .cs-seg-btn {
+.cart-split .cs-btn {
   padding: 8px 16px;
-  border: 0;
+  border: 1px solid #0d1b3a;
   border-radius: 0;
   background: #fff;
   color: #0d1b3a;
@@ -60,88 +61,242 @@
   cursor: pointer;
 }
 
-.cart-split .cs-seg-btn + .cs-seg-btn {
-  border-left: 1px solid #0d1b3a;
+.cart-split .cs-btn:hover {
+  background: #f0efed;
 }
 
-.cart-split .cs-seg-btn[aria-pressed='true'] {
-  background: #0d1b3a;
-  color: #fff;
+/* units left to assign */
+.cart-split .cs-status {
+  margin-bottom: 12px;
+  padding: 10px 14px;
+  border-left: 3px solid #1d5a1f;
+  background: #f0efed;
+  font-size: 1.4rem;
+  line-height: 2rem;
 }
 
-.cart-split .cs-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 12px;
+.cart-split .cs-status-warn {
+  border-left-color: #b26a00;
 }
 
-.cart-split .cs-card {
-  box-sizing: border-box;
-  padding: 14px 16px;
-  background-color: #f0efed;
-  border-top: 3px solid #0d1b3a;
+.cart-split .cs-status-list {
+  margin-top: 4px;
+  list-style: none;
   font-size: 1.3rem;
-  line-height: 1.8rem;
+  color: #4a4a4a;
 }
 
-.cart-split .cs-card-head {
+/* accordion */
+.cart-split .cs-accordion {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  margin-bottom: 8px;
-}
-
-.cart-split .cs-card-no {
-  font: 400 1.1rem/1.4rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: #6b6b6b;
-}
-
-.cart-split .cs-card-name {
-  font-size: 1.6rem;
-}
-
-.cart-split .cs-card-city {
-  color: #6b6b6b;
-}
-
-.cart-split .cs-lines {
-  list-style: none;
-}
-
-.cart-split .cs-lines li {
-  display: flex;
-  justify-content: space-between;
   gap: 8px;
-  margin: 0;
 }
 
-.cart-split .cs-line-units {
+.cart-split .cs-acc {
+  border: 1px solid #d9d6d1;
+  background: #fff;
+}
+
+.cart-split .cs-acc.is-open {
+  border-color: #0d1b3a;
+}
+
+.cart-split .cs-acc-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 14px 16px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: #0d1b3a;
+  font-size: 1.5rem;
+  text-align: left;
+  cursor: pointer;
+}
+
+.cart-split .cs-acc.is-open .cs-acc-head {
+  background: #f0efed;
+}
+
+.cart-split .cs-acc-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 12px;
+}
+
+.cart-split .cs-acc-chev {
+  display: inline-block;
+  width: 18px;
+  font-size: 2rem;
+  line-height: 1;
+}
+
+.cart-split .cs-acc-city {
+  font-size: 1.3rem;
+  color: #6b6b6b;
+}
+
+.cart-split .cs-acc-sum {
+  font-size: 1.4rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 
-.cart-split .cs-card-foot {
-  margin-top: 8px;
-  padding-top: 8px;
-  border-top: 1px solid #d9d6d1;
+.cart-split .cs-acc-panel {
+  padding: 8px 16px 16px;
+}
+
+.cart-split .cs-rows {
+  display: flex;
+  flex-direction: column;
+}
+
+.cart-split .cs-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 96px 96px;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid #ece9e4;
+  font-size: 1.4rem;
+}
+
+.cart-split .cs-row-of {
+  color: #6b6b6b;
+  font-size: 1.3rem;
+}
+
+.cart-split .cs-input {
+  box-sizing: border-box;
+  width: 96px;
+  height: 36px;
+  padding: 0 8px;
+  border: 1px solid #8a8a8a;
+  border-radius: 0;
+  font-size: 1.4rem;
+  text-align: right;
+}
+
+.cart-split .cs-row-value {
+  text-align: right;
   font-weight: 600;
 }
 
 .cart-split .cs-eta {
-  margin-top: 6px;
+  margin-top: 8px;
   padding-left: 8px;
   border-left: 3px solid #1d5a1f;
-  font-size: 1.2rem;
-  line-height: 1.7rem;
+  font-size: 1.3rem;
+  line-height: 1.8rem;
 }
 
 .cart-split .cs-eta-late {
   border-left-color: #b26a00;
 }
 
+/* place orders */
+.cart-split .cs-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.cart-split .cs-place {
+  padding: 12px 28px;
+  border: 1px solid #0d1b3a;
+  border-radius: 0;
+  background: #0d1b3a;
+  color: #fff;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.cart-split .cs-place:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cart-split .cs-foot-hint {
+  font-size: 1.3rem;
+  color: #6b6b6b;
+}
+
+.cart-split .cs-progress {
+  margin-top: 16px;
+  list-style: none;
+  font-size: 1.4rem;
+  line-height: 2.4rem;
+}
+
+.cart-split .cs-progress .is-done::before {
+  content: '\2713  ';
+  color: #1d5a1f;
+  font-weight: 700;
+}
+
+.cart-split .cs-progress .is-working {
+  color: #6b6b6b;
+}
+
+.cart-split .cs-result {
+  margin-top: 16px;
+  padding: 16px;
+  border-top: 3px solid #1d5a1f;
+  background: #f0efed;
+}
+
+.cart-split .cs-result-title {
+  font: 400 2.4rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+}
+
+.cart-split .cs-result-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.cart-split .cs-result-card {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  background: #fff;
+  font-size: 1.3rem;
+}
+
+.cart-split .cs-result-card strong {
+  font-size: 1.5rem;
+}
+
 .cart-split .cs-note {
   margin-top: 10px;
   font-size: 1.2rem;
   color: #6b6b6b;
+}
+
+@media (width < 700px) {
+  .cart-split .cs-row {
+    grid-template-columns: minmax(0, 1fr) 80px;
+  }
+
+  .cart-split .cs-row-of,
+  .cart-split .cs-row-value {
+    display: none;
+  }
+
+  .cart-split .cs-acc-head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
