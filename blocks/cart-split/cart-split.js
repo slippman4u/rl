@@ -11,21 +11,16 @@ import '../../scripts/initializers/cart.js';
  * changes nothing in Commerce. Step 2 replaces placeOrders() below with real order placement.
  * Locations, shares and transit days are demo values: edit DOORS.
  */
+// "match" picks the customer's saved address for each location (name, street or city).
 const ALL_DOORS = [
   {
-    id: 'D01', name: 'Chicago Flagship', city: 'Chicago, IL', share: 24, transit: 3,
+    id: 'D01', name: 'Acme HQ', city: 'Cincinnati, OH', share: 40, transit: 2, match: /1500 vine|cincinnati/i,
   },
   {
-    id: 'D02', name: 'Boston Back Bay', city: 'Boston, MA', share: 18, transit: 3,
+    id: 'D02', name: 'Acme West Coast DC', city: 'West Coast', share: 35, transit: 5, match: /west coast/i,
   },
   {
-    id: 'D03', name: 'Dallas NorthPark', city: 'Dallas, TX', share: 16, transit: 4,
-  },
-  {
-    id: 'D04', name: 'Atlanta Lenox', city: 'Atlanta, GA', share: 14, transit: 2,
-  },
-  {
-    id: 'D05', name: 'Seattle Downtown', city: 'Seattle, WA', share: 12, transit: 5,
+    id: 'D03', name: 'Acme East Coast DC', city: 'East Coast', share: 25, transit: 3, match: /east coast/i,
   },
 ];
 
@@ -194,7 +189,7 @@ function arrival(label, ship, transit) {
 export default function decorate(block) {
   /*
    * Block table options (all optional):
-   *   Locations       how many locations to show, 1 to 5 (default 5)
+   *   Locations       how many locations to show, 1 to 3 (default 3)
    *   Start           spread (by door share, default), first (all in the first location)
    *                   or empty (nothing assigned until the buyer does it)
    *   Mode            simulate (default) or real
@@ -204,7 +199,7 @@ export default function decorate(block) {
   const raw = readBlockConfig(block);
   const cfg = {
     real: String(raw.mode || '').toLowerCase() === 'real',
-    locations: Number(raw.locations) || 5,
+    locations: Number(raw.locations) || 3,
     start: ['spread', 'first', 'empty'].includes(String(raw.start || '').toLowerCase())
       ? String(raw.start).toLowerCase()
       : 'spread',
@@ -286,10 +281,13 @@ export default function decorate(block) {
       console.error('Split orders failed', e);
       state.error = e.message || 'Something went wrong';
       state.partial = e.completed || [];
-      // the cart was put back, so show what it holds now
-      const latest = events.lastPayload('cart/data');
-      state.lines = latest && Number(latest.totalQuantity) > 0 ? linesOf(latest) : [];
-      state.alloc = syncAllocation(new Map(), state.lines);
+      if (state.partial.length) {
+        // some orders went through and the rest was put back, so show what the cart holds now
+        const latest = events.lastPayload('cart/data');
+        state.lines = latest && Number(latest.totalQuantity) > 0 ? linesOf(latest) : [];
+        state.alloc = syncAllocation(new Map(), state.lines);
+      }
+      // otherwise nothing changed and the buyer's assignments are kept
     } finally {
       state.placing = false;
       state.busy = false;
