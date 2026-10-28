@@ -5,10 +5,11 @@ import { estimateFor, addBusinessDays } from '../../scripts/shipping-mock.js';
 import '../../scripts/initializers/cart.js';
 
 /*
- * Mock: split one cart across several ship-to doors (Story 1 and 2, CHK-2.3).
- * Every product is spread over the doors by each door's share, and each door becomes
- * its own order. Doors, shares and transit days are demo values: edit DOORS below.
- * Nothing here changes the real cart or the real checkout.
+ * Split cart, step 1 of 2 (demo).
+ * The buyer assigns every cart product to ship-to locations in an accordion, one section per
+ * location. "Place split orders" is SIMULATED: it shows one order number per location and
+ * changes nothing in Commerce. Step 2 replaces placeOrders() below with real order placement.
+ * Locations, shares and transit days are demo values: edit DOORS.
  */
 const DOORS = [
   {
@@ -27,7 +28,6 @@ const DOORS = [
     id: 'D05', name: 'Seattle Downtown', city: 'Seattle, WA', share: 12, transit: 5,
   },
 ];
-const MODES = [1, 3, 5];
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 const num = new Intl.NumberFormat('en-US');
@@ -58,43 +58,106 @@ function el(tag, cls, text) {
   return n;
 }
 
-/** Pure calculation, exported for tests. */
-export function splitCart(cart, count, today = new Date()) {
+/* ---------- pure logic (exported for tests) ---------- */
+
+/** Cart lines in a simple shape. */
+export function linesOf(cart) {
   const items = Array.isArray(cart?.items) ? cart.items : [];
-  const doors = DOORS.slice(0, count);
-  const weights = doors.map((d) => d.share);
-  const result = doors.map((door) => ({
+  return items
+    .map((it, i) => {
+      const qty = Math.max(0, Math.floor(Number(it.quantity) || 0));
+      const value = Number(it.total?.value) || (Number(it.price?.value) || 0) * qty;
+      return {
+        key: String(it.uid || it.sku || `line-${i}`) + (it.uid ? '' : `|${i}`),
+        name: String(it.name || ''),
+        sku: String(it.sku || ''),
+        qty,
+        unit: qty ? value / qty : 0,
+      };
+    })
+    .filter((l) => l.qty > 0);
+}
+
+/**
+ * Keep the buyer's assignments across cart updates. A line whose assignments still add up
+ * to its quantity is kept; any other line is spread by door share.
+ */
+export function syncAllocation(alloc, lines) {
+  const next = new Map();
+  const weights = DOORS.map((d) => d.share);
+  lines.forEach((l) => {
+    const old = alloc.get(l.key);
+    const total = old ? old.reduce((a, b) => a + b, 0) : -1;
+    next.set(l.key, old && total === l.qty ? old : apportion(l.qty, weights));
+  });
+  return next;
+}
+
+/** Orders per location from the assignments. */
+export function buildPlan(lines, alloc, today = new Date()) {
+  const plan = DOORS.map((door) => ({
     door, lines: [], units: 0, value: 0, readyShip: null, backShip: null,
   }));
-
-  items.forEach((item) => {
-    const qty = Math.max(0, Number(item.quantity) || 0);
-    if (!qty) return;
-    const lineValue = Number(item.total?.value) || (Number(item.price?.value) || 0) * qty;
-    const unitValue = lineValue / qty;
-    const est = estimateFor({ name: item.name, quantity: qty }, today);
+  lines.forEach((l) => {
+    const per = alloc.get(l.key) || DOORS.map(() => 0);
+    const est = estimateFor({ name: l.name, quantity: l.qty }, today);
     const readyTotal = est.shipments.filter((s) => s.status === 'ready').reduce((a, s) => a + s.units, 0);
     const readyShip = est.shipments.find((s) => s.status === 'ready')?.ships || null;
     const backShip = est.shipments.find((s) => s.status === 'backorder')?.ships || null;
-
-    const perDoor = apportion(qty, weights);
-    const readyPerDoor = apportion(readyTotal, perDoor);
-    perDoor.forEach((units, i) => {
+    const readyPer = apportion(readyTotal, per);
+    per.forEach((units, i) => {
       if (!units) return;
-      const row = result[i];
-      const ready = Math.min(units, readyPerDoor[i]);
+      const row = plan[i];
+      const ready = Math.min(units, readyPer[i]);
       row.lines.push({
-        name: String(item.name || ''), units, ready, back: units - ready,
+        key: l.key, name: l.name, sku: l.sku, units, ready, back: units - ready, value: units * l.unit,
       });
       row.units += units;
-      row.value += units * unitValue;
+      row.value += units * l.unit;
       if (ready && readyShip && (!row.readyShip || readyShip > row.readyShip)) row.readyShip = readyShip;
       if (units - ready && backShip && (!row.backShip || backShip > row.backShip)) row.backShip = backShip;
     });
   });
-
-  return result.filter((r) => r.units > 0);
+  return plan;
 }
+
+/** Units not yet assigned per line (negative when over-assigned). */
+export function remaining(lines, alloc) {
+  return lines.map((l) => ({
+    line: l,
+    left: l.qty - (alloc.get(l.key) || []).reduce((a, b) => a + b, 0),
+  }));
+}
+
+const sleep = (ms) => new Promise((resolve) => { setTimeout(resolve, ms); });
+
+/**
+ * STEP 1: simulated. Resolves with one made-up order number per location that has products.
+ * STEP 2 replaces this with real order placement (one cart and one order per location).
+ */
+export async function placeOrders(plan, onProgress, delay = 450) {
+  const used = plan.filter((p) => p.units > 0);
+  const base = 862000 + (Date.now() % 9000);
+  const done = [];
+  for (let i = 0; i < used.length; i += 1) {
+    onProgress({ index: i, total: used.length, door: used[i].door, state: 'working' });
+    // eslint-disable-next-line no-await-in-loop
+    await sleep(delay);
+    const order = {
+      door: used[i].door,
+      units: used[i].units,
+      value: used[i].value,
+      number: `RL-F27-${base + i * 7919}`,
+    };
+    done.push(order);
+    onProgress({
+      index: i, total: used.length, door: used[i].door, state: 'done', order,
+    });
+  }
+  return done;
+}
+
+/* ---------- block ---------- */
 
 function arrival(label, ship, transit) {
   const from = addBusinessDays(ship, transit);
@@ -102,92 +165,239 @@ function arrival(label, ship, transit) {
   return `${label} ships ${fmtDate.format(ship)}, arrives ${range(from, to)}`;
 }
 
-function doorCard(row, index) {
-  const card = el('article', 'cs-card');
-  const head = el('div', 'cs-card-head');
-  head.append(
-    el('span', 'cs-card-no', `Order ${index + 1}`),
-    el('strong', 'cs-card-name', row.door.name),
-    el('span', 'cs-card-city', `${row.door.id} · ${row.door.city}`),
-  );
-  card.append(head);
-
-  const list = el('ul', 'cs-lines');
-  row.lines.forEach((l) => {
-    const li = el('li');
-    li.append(el('span', 'cs-line-name', l.name), el('span', 'cs-line-units', `${num.format(l.units)}`));
-    list.append(li);
-  });
-  card.append(list);
-
-  const foot = el('div', 'cs-card-foot');
-  foot.append(el('span', 'cs-card-total', `${num.format(row.units)} units · ${money.format(row.value)}`));
-  card.append(foot);
-
-  const ready = row.lines.reduce((a, l) => a + l.ready, 0);
-  const back = row.lines.reduce((a, l) => a + l.back, 0);
-  if (ready && row.readyShip) {
-    card.append(el('p', 'cs-eta cs-eta-ok', arrival(`${num.format(ready)} in stock`, row.readyShip, row.door.transit)));
-  }
-  if (back && row.backShip) {
-    card.append(el('p', 'cs-eta cs-eta-late', arrival(`${num.format(back)} backordered`, row.backShip, row.door.transit)));
-  }
-  return card;
-}
-
 export default function decorate(block) {
-  const raw = readBlockConfig(block);
-  const wanted = Number(raw.doors);
-  let count = MODES.includes(wanted) ? wanted : 5;
-  let lastCart = null;
+  readBlockConfig(block); // reserved for future options
+  const state = {
+    lines: [],
+    alloc: new Map(),
+    open: new Set([0]),
+    progress: [],
+    result: null,
+    placing: false,
+  };
 
   block.classList.add('cs-ready');
   block.textContent = '';
   block.hidden = true;
 
+  function setUnits(key, doorIndex, value) {
+    const line = state.lines.find((l) => l.key === key);
+    if (!line) return;
+    const current = [...(state.alloc.get(key) || DOORS.map(() => 0))];
+    const n = Math.max(0, Math.min(line.qty, Math.floor(Number(value) || 0)));
+    current[doorIndex] = n;
+    state.alloc.set(key, current);
+    state.result = null;
+    paint();
+  }
+
+  function resetShares() {
+    state.alloc = new Map();
+    state.alloc = syncAllocation(state.alloc, state.lines);
+    state.result = null;
+    state.progress = [];
+    paint();
+  }
+
+  async function place(plan) {
+    state.placing = true;
+    state.progress = [];
+    state.result = null;
+    paint();
+    const done = await placeOrders(plan, (p) => {
+      state.progress = state.progress.filter((x) => x.index !== p.index);
+      state.progress.push(p);
+      paint();
+    });
+    state.placing = false;
+    state.result = done;
+    paint();
+  }
+
+  function statusBar(rem) {
+    const bar = el('div', 'cs-status');
+    bar.setAttribute('role', 'status');
+    const open = rem.filter((r) => r.left !== 0);
+    if (!open.length) {
+      const total = state.lines.reduce((a, l) => a + l.qty, 0);
+      bar.classList.add('cs-status-ok');
+      bar.append(el('strong', '', `All ${num.format(total)} units are assigned`));
+      return bar;
+    }
+    const left = open.reduce((a, r) => a + r.left, 0);
+    bar.classList.add('cs-status-warn');
+    bar.append(el('strong', '', left > 0 ? `${num.format(left)} units left to assign` : `${num.format(-left)} units over-assigned`));
+    const ul = el('ul', 'cs-status-list');
+    open.forEach((r) => {
+      ul.append(el('li', '', r.left > 0
+        ? `${r.line.name}: ${num.format(r.left)} left`
+        : `${r.line.name}: ${num.format(-r.left)} too many`));
+    });
+    bar.append(ul);
+    return bar;
+  }
+
+  function section(row, index) {
+    const isOpen = state.open.has(index);
+    const wrap = el('section', `cs-acc${isOpen ? ' is-open' : ''}`);
+    const panelId = `cs-panel-${index}`;
+
+    const btn = el('button', 'cs-acc-head');
+    btn.type = 'button';
+    btn.setAttribute('aria-expanded', String(isOpen));
+    btn.setAttribute('aria-controls', panelId);
+    btn.dataset.k = `head|${index}`;
+    const title = el('span', 'cs-acc-title');
+    title.append(
+      el('span', 'cs-acc-chev', isOpen ? '−' : '+'),
+      el('strong', '', row.door.name),
+      el('span', 'cs-acc-city', `${row.door.id} · ${row.door.city}`),
+    );
+    const sum = el('span', 'cs-acc-sum', row.units
+      ? `${num.format(row.units)} units · ${money.format(row.value)}`
+      : 'No products assigned');
+    btn.append(title, sum);
+    btn.addEventListener('click', () => {
+      if (state.open.has(index)) state.open.delete(index); else state.open.add(index);
+      paint();
+    });
+    wrap.append(btn);
+
+    if (isOpen) {
+      const panel = el('div', 'cs-acc-panel');
+      panel.id = panelId;
+      const table = el('div', 'cs-rows');
+      state.lines.forEach((l) => {
+        const units = (state.alloc.get(l.key) || [])[index] || 0;
+        const r = el('div', 'cs-row');
+        const label = el('span', 'cs-row-name', l.name);
+        const input = el('input', 'cs-input');
+        input.type = 'number';
+        input.min = '0';
+        input.max = String(l.qty);
+        input.step = '1';
+        input.value = String(units);
+        input.dataset.k = `in|${index}|${l.key}`;
+        input.setAttribute('aria-label', `${l.name} units for ${row.door.name}`);
+        input.addEventListener('input', () => setUnits(l.key, index, input.value));
+        r.append(
+          label,
+          el('span', 'cs-row-of', `of ${num.format(l.qty)}`),
+          input,
+          el('span', 'cs-row-value', money.format(units * l.unit)),
+        );
+        table.append(r);
+      });
+      panel.append(table);
+
+      const ready = row.lines.reduce((a, l) => a + l.ready, 0);
+      const back = row.lines.reduce((a, l) => a + l.back, 0);
+      if (ready && row.readyShip) {
+        panel.append(el('p', 'cs-eta cs-eta-ok', arrival(`${num.format(ready)} in stock`, row.readyShip, row.door.transit)));
+      }
+      if (back && row.backShip) {
+        panel.append(el('p', 'cs-eta cs-eta-late', arrival(`${num.format(back)} backordered`, row.backShip, row.door.transit)));
+      }
+      wrap.append(panel);
+    }
+    return wrap;
+  }
+
+  function progressList() {
+    const ul = el('ul', 'cs-progress');
+    state.progress
+      .sort((a, b) => a.index - b.index)
+      .forEach((p) => {
+        ul.append(el('li', p.state === 'done' ? 'is-done' : 'is-working', p.state === 'done'
+          ? `${p.door.name}: order ${p.order.number} placed`
+          : `${p.door.name}: placing order...`));
+      });
+    return ul;
+  }
+
+  function resultPanel() {
+    const box = el('div', 'cs-result');
+    box.append(el('h3', 'cs-result-title', `${state.result.length} orders placed`));
+    const grid = el('div', 'cs-result-grid');
+    state.result.forEach((o) => {
+      const c = el('div', 'cs-result-card');
+      c.append(
+        el('strong', '', o.number),
+        el('span', '', o.door.name),
+        el('span', '', `${num.format(o.units)} units · ${money.format(o.value)}`),
+      );
+      grid.append(c);
+    });
+    box.append(grid, el('p', 'cs-note', 'Simulated. Nothing was placed in Commerce.'));
+    return box;
+  }
+
   function paint() {
-    if (!lastCart) return;
-    const rows = splitCart(lastCart, count);
-    const units = rows.reduce((a, r) => a + r.units, 0);
-    const value = rows.reduce((a, r) => a + r.value, 0);
+    if (!state.lines.length) {
+      block.hidden = true;
+      return;
+    }
+    const focusKey = document.activeElement?.dataset?.k;
+    const plan = buildPlan(state.lines, state.alloc);
+    const rem = remaining(state.lines, state.alloc);
+    const total = plan.reduce((a, p) => a + p.units, 0);
+    const value = plan.reduce((a, p) => a + p.value, 0);
+    const usedDoors = plan.filter((p) => p.units > 0).length;
+    const ready = rem.every((r) => r.left === 0) && usedDoors > 0;
 
     const head = el('div', 'cs-head');
     const title = el('div');
     title.append(
       el('p', 'cs-label', 'Ship to multiple locations'),
-      el('h2', 'cs-title', rows.length === 1 ? 'Ships as 1 order' : `Splits into ${rows.length} orders`),
-      el('p', 'cs-sub', `${num.format(units)} units · ${money.format(value)} · each location gets its own order, PO and invoice`),
+      el('h2', 'cs-title', usedDoors === 1 ? 'Ships as 1 order' : `Splits into ${usedDoors} orders`),
+      el('p', 'cs-sub', `${num.format(total)} units · ${money.format(value)} · each location gets its own order, PO and invoice`),
     );
-    const seg = el('div', 'cs-seg');
-    seg.setAttribute('role', 'group');
-    seg.setAttribute('aria-label', 'Number of locations');
-    MODES.forEach((m) => {
-      const b = el('button', 'cs-seg-btn', m === 1 ? '1 address' : `${m} locations`);
-      b.type = 'button';
-      b.setAttribute('aria-pressed', String(m === count));
-      b.addEventListener('click', () => { count = m; paint(); });
-      seg.append(b);
+    const tools = el('div', 'cs-tools');
+    const reset = el('button', 'cs-btn', 'Reset to door shares');
+    reset.type = 'button';
+    reset.addEventListener('click', resetShares);
+    const all = el('button', 'cs-btn', state.open.size === DOORS.length ? 'Collapse all' : 'Expand all');
+    all.type = 'button';
+    all.addEventListener('click', () => {
+      state.open = state.open.size === DOORS.length ? new Set() : new Set(DOORS.map((d, i) => i));
+      paint();
     });
-    head.append(title, seg);
+    tools.append(reset, all);
+    head.append(title, tools);
 
-    const grid = el('div', 'cs-grid');
-    rows.forEach((r, i) => grid.append(doorCard(r, i)));
+    const accordion = el('div', 'cs-accordion');
+    plan.forEach((row, i) => accordion.append(section(row, i)));
 
-    block.replaceChildren(
-      head,
-      grid,
-      el('p', 'cs-note', 'Locations, shares and dates are demo values. Prices shown are the cart prices.'),
-    );
+    const foot = el('div', 'cs-foot');
+    const place1 = el('button', 'cs-place', state.placing ? 'Placing orders...' : `Place ${usedDoors} split orders`);
+    place1.type = 'button';
+    place1.disabled = !ready || state.placing;
+    place1.addEventListener('click', () => place(plan));
+    foot.append(place1);
+    if (!ready && !state.placing) foot.append(el('span', 'cs-foot-hint', 'Assign every unit to a location to continue.'));
+
+    const parts = [head, statusBar(rem), accordion, foot];
+    if (state.progress.length && !state.result) parts.push(progressList());
+    if (state.result) parts.push(resultPanel());
+    parts.push(el('p', 'cs-note', 'Locations, shares and dates are demo values. Prices shown are the cart prices.'));
+    block.replaceChildren(...parts);
     block.hidden = false;
+
+    if (focusKey && typeof block.querySelector === 'function') {
+      const again = [...block.querySelectorAll('[data-k]')].find((n) => n.dataset.k === focusKey);
+      if (again && typeof again.focus === 'function') again.focus({ preventScroll: true });
+    }
   }
 
   events.on('cart/data', (cart) => {
     const empty = !cart || !(Number(cart.totalQuantity) > 0);
-    lastCart = empty ? null : cart;
     if (empty) {
+      state.lines = [];
       block.hidden = true;
       return;
     }
+    state.lines = linesOf(cart);
+    state.alloc = syncAllocation(state.alloc, state.lines);
     paint();
   }, { eager: true });
 }
