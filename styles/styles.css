@@ -1035,3 +1035,65 @@ main .section.targeted-block-container .hero {
     margin: 0;
   }
 }
+
+/* Welcome overlay on the personalized hero (top left, floating).
+   Same rules as before, without the ".targeted-block" page class. Paste at the very bottom of
+   styles/styles.css. The old ".targeted-block" copies can stay or be deleted. */
+main:has(> .hero-container + .section h1[id^='welcome-back']) {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* Hero image and welcome section share the same grid cell, so the box sits on the image */
+main > .hero-container,
+main > .hero-container + .section:has(h1[id^='welcome-back']) {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+main > .hero-container + .section:has(h1[id^='welcome-back']) {
+  z-index: 2;
+  align-self: start;
+  justify-self: start;
+  margin: 48px 0 0 56px;
+  padding: 0;
+  width: auto;
+  max-width: calc(100% - 112px);
+}
+
+main > .hero-container + .section:has(h1[id^='welcome-back']) > .default-content-wrapper {
+  box-sizing: border-box;
+  width: max-content;
+  max-width: 100%;
+  margin: 0;
+  padding: 32px 44px;
+  background-color: rgb(255 255 255 / 70%);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  backdrop-filter: blur(14px) saturate(1.2);
+  border: 1px solid rgb(255 255 255 / 60%);
+  border-radius: 2px;
+  box-shadow: 0 8px 32px rgb(13 27 58 / 18%);
+}
+
+main > .hero-container + .section:has(h1[id^='welcome-back']) h1 {
+  margin: 0;
+  color: #0d1b3a;
+  font: 400 clamp(3rem, 4vw, 5.2rem) / 1.15 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+  letter-spacing: 0;
+}
+
+/* Only the welcome line goes in the box */
+main > .hero-container + .section:has(h1[id^='welcome-back']) p {
+  display: none;
+}
+
+@media (width < 700px) {
+  main > .hero-container + .section:has(h1[id^='welcome-back']) {
+    margin: 20px 0 0 16px;
+    max-width: calc(100% - 32px);
+  }
+
+  main > .hero-container + .section:has(h1[id^='welcome-back']) > .default-content-wrapper {
+    padding: 18px 22px;
+  }
+}
