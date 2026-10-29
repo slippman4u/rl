@@ -1006,3 +1006,32 @@ main .section.targeted-block-container .hero {
     padding: 18px 22px;
   }
 }
+/* Home page layout: append this to the bottom of styles/styles.css */
+
+/* A cards block with exactly 5 cards fills one row (no lonely fifth card) */
+@media (width >= 900px) {
+  main .cards > ul:has(> li:nth-child(5):last-child) {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+  }
+
+  /* exactly 3 cards: three equal columns across the full width */
+  main .cards > ul:has(> li:nth-child(3):last-child) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  /* two blocks side by side: set the section style to "two-up" in da.live */
+  main .section.two-up {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    gap: 24px;
+    align-items: stretch;
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  main .section.two-up > div {
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+  }
+}
