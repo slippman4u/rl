@@ -1,0 +1,114 @@
+.account-team {
+  max-width: 1200px;
+  margin: 0 auto 32px;
+  color: #0d1b3a;
+}
+
+.account-team .at-card {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  height: 100%;
+  box-sizing: border-box;
+  padding: 24px;
+  border: 1px solid #d9d6d1;
+  border-top: 3px solid #0d1b3a;
+  background: #fff;
+}
+
+.account-team p,
+.account-team h2,
+.account-team ul {
+  margin: 0;
+  padding: 0;
+}
+
+.account-team .at-photo {
+  flex: 0 0 120px;
+  width: 120px;
+  height: 120px;
+  overflow: hidden;
+  border-radius: 50%;
+  background: #f0efed;
+}
+
+.account-team .at-photo picture,
+.account-team .at-photo img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: 50% 25%;
+}
+
+.account-team .at-body {
+  min-width: 0;
+}
+
+.account-team .at-label {
+  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.account-team .at-name {
+  margin-top: 4px;
+  font: 400 2.8rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+}
+
+.account-team .at-title {
+  margin-top: 2px;
+  font-size: 1.4rem;
+  color: #4a4a4a;
+}
+
+.account-team .at-lines {
+  margin-top: 12px;
+  list-style: none;
+  font-size: 1.4rem;
+  line-height: 2.4rem;
+}
+
+.account-team .at-lines a {
+  color: #0d1b3a;
+  text-decoration: none;
+}
+
+.account-team .at-lines a:hover {
+  text-decoration: underline;
+}
+
+.account-team .at-actions {
+  margin-top: 16px;
+}
+
+.account-team .at-button {
+  display: inline-block;
+  padding: 10px 24px;
+  border: 1px solid #0d1b3a;
+  border-radius: 0;
+  background: #0d1b3a;
+  color: #fff;
+  font-size: 1.4rem;
+  letter-spacing: 0.06em;
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.account-team .at-button:hover {
+  background: #fff;
+  color: #0d1b3a;
+}
+
+.account-team .at-note {
+  margin-top: 10px;
+  font-size: 1.2rem;
+  color: #6b6b6b;
+}
+
+@media (width < 600px) {
+  .account-team .at-card {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
