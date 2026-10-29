@@ -1,6 +1,6 @@
 .cart-intelligence {
   max-width: 1200px;
-  margin: 0 auto 24px;
+  margin: 0 auto;
   color: #0d1b3a;
 }
 
@@ -25,18 +25,27 @@
 }
 
 .cart-intelligence .ci-label {
-  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .cart-intelligence .ci-big {
   margin-top: 6px;
-  font: 400 3rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+  font-family: inherit;
+  font-size: 3rem;
+  font-weight: 300;
+  line-height: 1.2;
 }
 
 .cart-intelligence .ci-of {
-  font: 400 1.4rem/2rem var(--type-base-font-family, sans-serif);
+  font-family: inherit;
+  font-size: 1.4rem;
+  font-weight: 400;
+  line-height: 2rem;
   color: #4a4a4a;
 }
 
