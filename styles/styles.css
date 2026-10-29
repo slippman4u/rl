@@ -1097,3 +1097,38 @@ main > .hero-container + .section:has(h1[id^='welcome-back']) p {
     padding: 18px 22px;
   }
 }
+
+/* Home page: tighter vertical spacing. Append to the bottom of styles/styles.css.
+   Only sections that hold the home page blocks are changed, so other pages keep their spacing. */
+main > .section:has(.account-team, .last-split-order, .cards, .cart-intelligence) {
+  margin: 0;
+  padding-block: 12px;
+}
+
+/* headings and intro lines inside those sections */
+main > .section:has(.account-team, .last-split-order, .cards) .default-content-wrapper > * {
+  margin-block: 0 12px;
+}
+
+/* the "Account #" line above the account team card */
+main > .section:has(.account-team) .default-content-wrapper {
+  margin-bottom: 0;
+}
+
+/* blocks and their wrappers carry no extra margin of their own */
+main > .section:has(.account-team, .last-split-order, .cards) > div {
+  margin-block: 0;
+}
+
+main .account-team-wrapper,
+main .last-split-order-wrapper,
+main .cards-wrapper {
+  margin-block: 0;
+  padding-block: 0;
+}
+
+/* two blocks side by side: no extra gap above the pair */
+main .section.two-up {
+  padding-block: 12px;
+  margin-block: 0;
+}
