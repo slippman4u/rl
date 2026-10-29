@@ -1,6 +1,6 @@
 .account-team {
   max-width: 1200px;
-  margin: 0 auto 32px;
+  margin: 0 auto;
   color: #0d1b3a;
 }
 
@@ -46,14 +46,20 @@
 }
 
 .account-team .at-label {
-  font: 400 1.2rem/1.6rem ui-monospace, 'SF Mono', menlo, consolas, monospace;
+  font-family: inherit;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.6rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
 .account-team .at-name {
   margin-top: 4px;
-  font: 400 2.8rem/1.2 'Bodoni 72', didot, 'Bodoni MT', baskerville, 'Times New Roman', serif;
+  font-family: inherit;
+  font-size: 2.8rem;
+  font-weight: 300;
+  line-height: 1.2;
 }
 
 .account-team .at-title {
