@@ -827,11 +827,12 @@ async function getProductVariants(sku) {
               images(roles: ["image"]) {
                 url
               }
-              ...on SimpleProductView {
-                price {
-                  final { amount { currency value } }
-                }
-              }
+...on SimpleProductView {
+  price {
+    final { amount { currency value } }
+    regular { amount { currency value } }
+  }
+}
             }
           }
         }
