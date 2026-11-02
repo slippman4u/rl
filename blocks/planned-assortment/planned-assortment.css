@@ -554,3 +554,45 @@
 @media (prefers-reduced-motion: reduce) {
   .planned-assortment * { transition: none !important; }
 }
+
+/* commit bar: draft, committed, changes requested, confirmed */
+.planned-assortment .pa-commit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-left: 4px solid #8a8a8a;
+  background-color: var(--pa-tile);
+  font-size: 1.4rem;
+  line-height: 2rem;
+}
+
+.planned-assortment .pa-commit-submitted {
+  border-left-color: #b26a00;
+}
+
+.planned-assortment .pa-commit-changes {
+  border-left-color: #b3261e;
+}
+
+.planned-assortment .pa-commit-confirmed {
+  border-left-color: #1d5a1f;
+}
+
+.planned-assortment .pa-commit-state {
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.planned-assortment .pa-commit-text {
+  flex: 1 1 320px;
+}
+
+.planned-assortment .pa-commit-actions {
+  display: flex;
+  gap: 8px;
+}
