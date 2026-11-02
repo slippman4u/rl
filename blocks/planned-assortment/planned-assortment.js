@@ -1,4 +1,7 @@
 import { readBlockConfig } from '../../scripts/aem.js';
+import {
+  getCommit, submitCommit, clearCommit, onCommitChange, dateText,
+} from '../../scripts/plan-commit.js';
 
 const money = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
 const num = new Intl.NumberFormat('en-US');
@@ -93,6 +96,7 @@ export default async function decorate(block) {
   const season = cfg.season || 'Fall 2027';
   const account = cfg.account || 'Customer account';
   const dataPath = cfg.data || '';
+  const preparedBy = String(cfg['prepared-by'] || '').slice(0, 80); // the rep who builds the plan with the buyer
 
   let rows = sampleRows();
   if (isSitePath(dataPath)) {
@@ -274,6 +278,47 @@ export default async function decorate(block) {
     state.selected.clear();
     say('Plan reset to the original version.');
     render();
+  }
+
+  /* ---------- commit to the plan ---------- */
+  const commitBar = el('div', { class: 'pa-commit', role: 'region', 'aria-label': 'Plan commitment' });
+  const rep = preparedBy || 'your account team';
+
+  function commitNow() {
+    const t = totals(state.items);
+    submitCommit({
+      season, account, by: preparedBy, styles: state.items.length, units: t.units, doors: t.doors, cost: t.cost, retail: t.retail,
+    });
+    say('Plan submitted for confirmation.');
+  }
+
+  function renderCommit(c) {
+    const t = totals(state.items);
+    const facts = (x) => `${num.format(x.styles)} styles · ${num.format(x.units)} units · ${money.format(x.retail)} retail`;
+    const actions = [];
+    let text;
+    let kind = 'draft';
+    if (!c) {
+      text = `Draft plan. Review it, then commit it for ${rep} to confirm. ${facts({ styles: state.items.length, units: t.units, retail: t.retail })}.`;
+      actions.push(el('button', { type: 'button', class: 'pa-btn pa-btn-primary', onclick: commitNow }, 'Commit plan'));
+    } else if (c.status === 'submitted') {
+      kind = 'submitted';
+      text = `Committed ${dateText(c.at)} · ref ${c.ref}. Waiting for ${rep} to confirm. ${facts(c)}.`;
+      actions.push(el('button', { type: 'button', class: 'pa-btn', onclick: () => { clearCommit(); say('Commit withdrawn.'); } }, 'Withdraw'));
+    } else if (c.status === 'changes') {
+      kind = 'changes';
+      text = `${rep.charAt(0).toUpperCase()}${rep.slice(1)} asked for changes${c.note ? `: ${c.note}` : '.'} Ref ${c.ref}.`;
+      actions.push(el('button', { type: 'button', class: 'pa-btn pa-btn-primary', onclick: commitNow }, 'Commit again'));
+    } else {
+      kind = 'confirmed';
+      text = `Confirmed ${dateText(c.updatedAt)} · ref ${c.ref}. ${facts(c)}. Your order stays open until the season order is placed.`;
+      actions.push(el('button', { type: 'button', class: 'pa-btn', onclick: () => { clearCommit(); say('Demo reset.'); } }, 'Reset demo'));
+    }
+    commitBar.className = `pa-commit pa-commit-${kind}`;
+    commitBar.replaceChildren(
+      el('span', { class: 'pa-commit-state' }, { draft: 'Draft', submitted: 'Committed', changes: 'Changes requested', confirmed: 'Confirmed' }[kind]),
+      el('span', { class: 'pa-commit-text' }, text),
+      el('span', { class: 'pa-commit-actions' }, ...actions));
   }
 
   /* ---------- renderers ---------- */
@@ -460,7 +505,9 @@ export default async function decorate(block) {
     el('div', {},
       el('p', { class: 'pa-eyebrow' }, 'Planned assortment'),
       el('h2', { class: 'pa-title' }, `${season} · ${account}`),
-      el('p', { class: 'pa-sub' }, 'Season × FOB × account plan, synced from the planning system.', fit('ootb', 'PAP-1.1 to 1.4, 2.1 to 2.4'))),
+      el('p', { class: 'pa-sub' }, preparedBy
+        ? `Season plan prepared with ${preparedBy}. Review it, then commit.`
+        : 'Season × FOB × account plan, synced from the planning system.')),
     el('div', { class: 'pa-head-actions' },
       el('button', { type: 'button', class: 'pa-btn', onclick: simulateUpdate }, 'Simulate plan update'),
       el('button', { type: 'button', class: 'pa-btn', onclick: () => exportCsv(visible(), 'view') }, 'Export to Excel (CSV)'),
@@ -472,6 +519,9 @@ export default async function decorate(block) {
     el('label', { class: 'pa-all' }, selectAll, ' Select all'));
 
   block.classList.add('pa-ready');
-  block.replaceChildren(head, banner, kpis, pivot, chips, controls, bulk, status, content, dialog);
+  block.replaceChildren(head, commitBar, banner, kpis, pivot, chips, controls, bulk, status, content, dialog);
   render();
+  renderCommit(getCommit());
+  // the rep confirms or asks for changes in Rep Workspace 2 (another tab): update when it happens
+  onCommitChange(renderCommit);
 }
