@@ -1,3 +1,6 @@
+import * as pdpApi from '@dropins/storefront-pdp/api.js';
+import '../../scripts/initializers/pdp.js';
+
 /*
  * SKU search (demo mock-up): paste a list of SKUs or import a CSV, and the page pulls up the
  * matching products with deep facets on the left. SKUs that do not match are explained at the top.
@@ -62,6 +65,34 @@ const KNOWN_ISSUES = {
   'POLO-EU1': 'Not in your account\'s catalog. This style belongs to the EU assortment.',
   'RLX-2200': 'Not yet released. This style opens to your account on January 15, 2027.',
 };
+
+// Pictures. Any style that also exists in your Commerce catalog gets its real picture
+// automatically (matched by SKU). For the others, put a picture address here, for example
+// from da.live or AEM Assets:  CBL: '/media/cable-knit-sweater.jpg'
+const IMAGE_OVERRIDES = {
+  // CBL: '/media/cable-knit-sweater.jpg',
+};
+
+/** Ask Commerce for the pictures of every style SKU in the sample catalog. Returns { SKU: url }. */
+async function loadImages() {
+  const out = { ...IMAGE_OVERRIDES };
+  try {
+    const { data } = await pdpApi.fetchGraphQl(
+      `query GET_IMAGES($skus: [String]!) {
+        products(skus: $skus) {
+          sku
+          images(roles: ["image"]) { url }
+        }
+      }`,
+      { method: 'GET', variables: { skus: CATALOG.map((p) => p.sku) } },
+    );
+    (data?.products || []).forEach((p) => {
+      const url = p?.images?.[0]?.url;
+      if (url && !out[p.sku]) out[p.sku] = url.startsWith('//') ? `https:${url}` : url;
+    });
+  } catch (e) { /* no pictures: the colored tiles stay */ }
+  return out;
+}
 
 const SAMPLE = ['CFM', 'RFK-Clubhouse Cream-L', 'RFK-Polo Black-M', 'OXF', 'CHN', 'MRN', 'RFK-Clubhouse Crem-L', 'CFM-OLD', 'POLO-EU1', 'XYZ-999', 'OXF'].join('\n');
 
@@ -188,6 +219,9 @@ export default async function decorate(block) {
   const state = {
     result: null, filters: {}, sort: 'list', open: {}, more: {},
   };
+
+  let images = {};
+  loadImages().then((found) => { images = found; if (state.result) renderMain(); });
 
   block.textContent = '';
   const title = el('h1', 'sku-search-title', 'Search by SKU');
@@ -370,6 +404,14 @@ export default async function decorate(block) {
     const hex = COLOR_HEX[p.colors[0]] || '#ddd';
     tile.style.background = `linear-gradient(160deg, ${hex}, ${hex}cc)`;
     if (LIGHT.has(p.colors[0])) tile.classList.add('is-light');
+    if (images[p.sku]) {
+      const img = el('img', 'sku-search-img');
+      img.src = images[p.sku];
+      img.alt = p.name;
+      img.loading = 'lazy';
+      img.addEventListener('error', () => img.remove());
+      tile.append(img);
+    }
     tile.append(el('span', 'sku-search-tile-sku', p.sku));
     a.append(tile);
 
