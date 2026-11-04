@@ -27,6 +27,40 @@ function parse(text) {
     });
 }
 
+/** A confirmation dialog styled like the site (not the browser's). Resolves true or false. */
+function confirmDialog(title, text, okLabel) {
+  return new Promise((resolve) => {
+    const dialog = document.createElement('dialog');
+    dialog.className = 'size-grid-dialog';
+    const h = document.createElement('h3');
+    h.textContent = title;
+    const p = document.createElement('p');
+    p.textContent = text;
+    const row = document.createElement('div');
+    row.className = 'size-grid-dialog-actions';
+    const cancel = document.createElement('button');
+    cancel.type = 'button';
+    cancel.className = 'size-grid-dialog-cancel';
+    cancel.textContent = 'Cancel';
+    const ok = document.createElement('button');
+    ok.type = 'button';
+    ok.className = 'size-grid-dialog-ok';
+    ok.textContent = okLabel;
+    row.append(cancel, ok);
+    dialog.append(h, p, row);
+    document.body.append(dialog);
+
+    let answer = false;
+    cancel.addEventListener('click', () => dialog.close());
+    ok.addEventListener('click', () => { answer = true; dialog.close(); });
+    // clicking the dim backdrop cancels
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); });
+    dialog.addEventListener('close', () => { dialog.remove(); resolve(answer); });
+    dialog.showModal();
+    cancel.focus();
+  });
+}
+
 export default async function decorate(block) {
   block.classList.add('size-grid');
   await loadCSS(`${window.hlx?.codeBasePath || ''}/blocks/size-grid/size-grid.css`);
@@ -108,9 +142,8 @@ export default async function decorate(block) {
     addButton.addEventListener('click', () => setTimeout(refresh, 600));
     refresh();
 
-    clear.addEventListener('click', () => {
-      // eslint-disable-next-line no-alert
-      if (!window.confirm('Clear all quantities in the grid?')) return;
+    clear.addEventListener('click', async () => {
+      if (!await confirmDialog('Clear all quantities?', 'Every quantity in the grid will go back to 0.', 'Clear')) return;
       table.querySelectorAll('.size-grid-qty').forEach((input) => {
         input.value = '0';
         input.dispatchEvent(new Event('input', { bubbles: true }));
