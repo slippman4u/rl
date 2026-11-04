@@ -74,22 +74,38 @@ const IMAGE_OVERRIDES = {
 
 /** Ask Commerce for the pictures of every style SKU in the sample catalog. Returns { SKU: url }. */
 async function loadImages() {
-  const out = { ...IMAGE_OVERRIDES };
-  try {
-    const { data } = await CS_FETCH_GRAPHQL.fetchGraphQl(
-      `query GET_IMAGES($skus: [String]!) {
-        products(skus: $skus) {
-          sku
-          images(roles: ["image"]) { url }
-        }
-      }`,
-      { method: 'GET', variables: { skus: CATALOG.map((p) => p.sku) } },
-    );
-    (data?.products || []).forEach((p) => {
-      const url = p?.images?.[0]?.url;
-      if (url && !out[p.sku]) out[p.sku] = url.startsWith('//') ? `https:${url}` : url;
-    });
-  } catch (e) { /* no pictures: the colored tiles stay */ }
+  // keys are lower case so "CFM" and "cfm" both match
+  const out = {};
+  Object.entries(IMAGE_OVERRIDES).forEach(([k, v]) => { out[k.toLowerCase()] = v; });
+  const query = `query GET_IMAGES($skus: [String]) {
+    products(skus: $skus) {
+      sku
+      images(roles: []) { url roles }
+    }
+  }`;
+  const variables = { skus: CATALOG.map((p) => p.sku) };
+  let data = null;
+  // try a GET first, then a POST
+  for (const method of ['GET', 'POST']) {
+    try {
+      // eslint-disable-next-line no-await-in-loop
+      const res = await CS_FETCH_GRAPHQL.fetchGraphQl(query, { method, variables });
+      if (res?.errors?.length) console.debug('SKU search images: errors', method, res.errors);
+      if (res?.data?.products) { data = res.data; break; }
+    } catch (e) {
+      console.debug('SKU search images: request failed', method, e);
+    }
+  }
+  const products = data?.products || [];
+  products.forEach((p) => {
+    const imgs = p?.images || [];
+    const best = imgs.find((i) => (i.roles || []).includes('image')) || imgs[0];
+    const url = best?.url;
+    if (url && !out[p.sku.toLowerCase()]) {
+      out[p.sku.toLowerCase()] = url.startsWith('//') ? `https:${url}` : url;
+    }
+  });
+  console.debug('SKU search images', { asked: variables.skus.length, returned: products.map((p) => p.sku), withPictures: Object.keys(out) });
   return out;
 }
 
@@ -403,9 +419,10 @@ export default async function decorate(block) {
     const hex = COLOR_HEX[p.colors[0]] || '#ddd';
     tile.style.background = `linear-gradient(160deg, ${hex}, ${hex}cc)`;
     if (LIGHT.has(p.colors[0])) tile.classList.add('is-light');
-    if (images[p.sku]) {
+    const pic = images[p.sku.toLowerCase()];
+    if (pic) {
       const img = el('img', 'sku-search-img');
-      img.src = images[p.sku];
+      img.src = pic;
       img.alt = p.name;
       img.loading = 'lazy';
       img.addEventListener('error', () => img.remove());
