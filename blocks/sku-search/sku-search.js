@@ -79,7 +79,7 @@ const hash = (str) => [...String(str)].reduce((h, c) => ((h * 31) + c.charCodeAt
 const pickFrom = (list, seed, n = 0) => list[(hash(seed) + n * 7) % list.length];
 
 function mockAttributes(p) {
-  const key = p.sku.toLowerCase();
+  const key = (p.parentSku || p.sku).toLowerCase();
   const known = KNOWN[key] || {};
   const out = {};
   Object.entries(POOLS).forEach(([label, pool], i) => { out[label] = [pickFrom(pool, key + label, i)]; });
@@ -170,6 +170,9 @@ async function fetchProducts(skus) {
       (attrs[label] = attrs[label] || new Set()).add(value);
     });
     out.set(p.sku.toLowerCase(), {
+      key: p.sku,
+      parentSku: p.sku,
+      isVariant: false,
       sku: p.sku,
       name: p.name || p.sku,
       url: p.urlKey ? getProductLink(p.urlKey, p.sku) : '',
@@ -199,6 +202,45 @@ async function fetchProducts(skus) {
   return out;
 }
 
+/**
+ * Look up color-and-size SKUs (for example CFM-Newport Navy-L) inside their parent product.
+ * Returns Map(lower-case variant SKU -> { parent, selections, product }).
+ */
+async function fetchVariantMatches(parentSkus) {
+  const found = new Map();
+  await Promise.all(parentSkus.map(async (parent) => {
+    try {
+      const res = await CS_FETCH_GRAPHQL.fetchGraphQl(
+        `query GET_VARIANTS($sku: String!) {
+          variants(sku: $sku) {
+            variants {
+              selections
+              product {
+                sku
+                inStock
+                images(roles: ["image"]) { url }
+                ... on SimpleProductView {
+                  price {
+                    final { amount { currency value } }
+                    regular { amount { currency value } }
+                  }
+                }
+              }
+            }
+          }
+        }`,
+        { method: 'GET', variables: { sku: parent } },
+      );
+      (res?.data?.variants?.variants || []).forEach((v) => {
+        if (v?.product?.sku) {
+          found.set(v.product.sku.toLowerCase(), { parent, selections: v.selections || [], product: v.product });
+        }
+      });
+    } catch (e) { /* not a configurable product: nothing to match */ }
+  }));
+  return found;
+}
+
 /** Facets built from what the matched products actually carry. */
 function buildFacets(products) {
   const facets = [
@@ -221,6 +263,21 @@ function buildFacets(products) {
       });
     });
   return facets;
+}
+
+/* ---------- Cart: same call the product page grid uses (parent SKU + the variant's option UIDs) ---------- */
+async function addVariantsToCart(items) {
+  const { addProductsToCart } = await import('@dropins/storefront-cart/api.js');
+  await addProductsToCart(items.map(({ p, qty }) => ({
+    sku: p.parentSku,
+    optionsUIDs: p.selections,
+    quantity: qty,
+  })));
+  refreshParentCart();
+}
+
+function addVariantToCart(p, qty) {
+  return addVariantsToCart([{ p, qty }]);
 }
 
 /* ---------- Quick view tray: the product's real page, sliding in from the right ---------- */
@@ -332,7 +389,7 @@ export default async function decorate(block) {
   const config = readBlockConfig(block);
   const mockOn = !/^(off|false|no)$/i.test(String(config['mock-facets'] || 'on'));
   const state = {
-    result: null, filters: {}, pending: {}, sortBy: 'list', dir: 'asc', open: {}, more: {}, selected: new Set(), view: '5', facets: [], busy: false, error: '', panel: true,
+    result: null, filters: {}, pending: {}, sortBy: 'list', dir: 'asc', open: {}, more: {}, selected: new Set(), qty: new Map(), view: '5', facets: [], busy: false, error: '', panel: true,
   };
 
   block.textContent = '';
@@ -541,7 +598,7 @@ export default async function decorate(block) {
   }
 
   function card(p) {
-    const a = el('div', `sku-search-card${state.selected.has(p.sku) ? ' is-selected' : ''}`);
+    const a = el('div', `sku-search-card${state.selected.has(p.key) ? ' is-selected' : ''}`);
     const tile = el('div', 'sku-search-tile');
     if (p.image) {
       const img = el('img', 'sku-search-img');
@@ -568,21 +625,60 @@ export default async function decorate(block) {
       h.textContent = p.name;
     }
     body.append(h);
-    body.append(el('div', 'sku-search-meta', `SKU ${p.sku.toUpperCase()}`));
-    const colors = p.attrs.Color || p.attrs.Colour;
-    if (colors) body.append(el('div', 'sku-search-meta', `Color: ${colors.join(' / ')}`));
+    body.append(el('div', 'sku-search-meta', `SKU ${p.sku}`));
+    if (p.isVariant) {
+      body.append(el('div', 'sku-search-variant', `Variant: ${p.variantLabel}`));
+    } else {
+      const colors = p.attrs.Color || p.attrs.Colour;
+      if (colors) body.append(el('div', 'sku-search-meta', `Color: ${colors.join(' / ')}`));
+    }
     const price = el('div', 'sku-search-price');
     price.append(el('span', '', 'Wholesale: '), el('strong', '', money(p.wholesale)), el('span', 'sku-search-msrp', `MSRP: ${money(p.retail)}`));
     body.append(price);
     body.append(el('span', `sku-search-stock ${p.inStock ? '' : 'is-out-of-stock'}`, p.inStock ? 'In stock' : 'Out of stock'));
 
+    // A configurable parent cannot go in the cart: the buyer picks a color and size first.
+    // A matched color-and-size SKU can be added right here.
+    const buy = el('div', 'sku-search-buy');
+    if (p.isVariant && p.inStock) {
+      const qty = el('input', 'sku-search-qty');
+      qty.type = 'number';
+      qty.min = '1';
+      qty.value = String(state.qty.get(p.key) || 1);
+      qty.setAttribute('aria-label', `Quantity for ${p.sku}`);
+      qty.addEventListener('input', () => { state.qty.set(p.key, Math.max(1, Math.floor(Number(qty.value) || 1))); });
+      const addBtn = el('button', 'sku-search-addcart', 'Add to cart');
+      addBtn.type = 'button';
+      const note = el('div', 'sku-search-buynote');
+      note.setAttribute('role', 'status');
+      addBtn.addEventListener('click', async () => {
+        addBtn.disabled = true;
+        note.textContent = '';
+        try {
+          await addVariantToCart(p, state.qty.get(p.key) || 1);
+          note.textContent = 'Added to cart';
+        } catch (e) {
+          note.textContent = e?.message || 'Could not add to cart.';
+        } finally {
+          addBtn.disabled = false;
+        }
+      });
+      buy.append(qty, addBtn, note);
+    } else if (!p.isVariant && p.url) {
+      const choose = el('button', 'sku-search-addcart is-outline', 'Choose color and size');
+      choose.type = 'button';
+      choose.addEventListener('click', (e) => openInTray(e, p, choose));
+      buy.append(choose);
+    }
+    body.append(buy);
+
     const foot = el('div', 'sku-search-cardfoot');
     const pick = el('label', 'sku-search-pick');
     const cb = el('input');
     cb.type = 'checkbox';
-    cb.checked = state.selected.has(p.sku);
+    cb.checked = state.selected.has(p.key);
     cb.addEventListener('change', () => {
-      if (cb.checked) state.selected.add(p.sku); else state.selected.delete(p.sku);
+      if (cb.checked) state.selected.add(p.key); else state.selected.delete(p.key);
       renderMain();
     });
     pick.append(cb, el('span', '', 'Select'));
@@ -600,7 +696,7 @@ export default async function decorate(block) {
 
   function exportSelected() {
     const rows = [['SKU', 'Name', 'Wholesale', 'MSRP']];
-    state.result.found.filter((p) => state.selected.has(p.sku)).forEach((p) => {
+    state.result.found.filter((p) => state.selected.has(p.key)).forEach((p) => {
       rows.push([p.sku, p.name, p.wholesale, p.retail]);
     });
     const csv = rows.map((row) => row.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(',')).join('\n');
@@ -634,7 +730,7 @@ export default async function decorate(block) {
     selGroup.append(el('span', '', 'Selection'));
     const all = el('button', 'sku-search-tiny', 'Select all on page');
     all.type = 'button';
-    all.addEventListener('click', () => { list.forEach((p) => state.selected.add(p.sku)); renderMain(); });
+    all.addEventListener('click', () => { list.forEach((p) => state.selected.add(p.key)); renderMain(); });
     const none = el('button', 'sku-search-tiny', 'Deselect all');
     none.type = 'button';
     none.addEventListener('click', () => { state.selected.clear(); renderMain(); });
@@ -677,11 +773,27 @@ export default async function decorate(block) {
     if (n) {
       const pickbar = el('div', 'sku-search-pickbar');
       pickbar.append(el('strong', 'sku-search-selected', `${n} selected`));
-      const add = el('button', 'sku-search-go', 'Add to order');
+      const add = el('button', 'sku-search-go', 'Add to cart');
       add.type = 'button';
-      add.addEventListener('click', () => {
+      add.addEventListener('click', async () => {
         pickbar.querySelector('.sku-search-sent')?.remove();
-        pickbar.append(el('span', 'sku-search-sent', `${n} style${n === 1 ? '' : 's'} sent to your order (demo).`));
+        const chosen = state.result.found.filter((p) => state.selected.has(p.key));
+        const buyable = chosen.filter((p) => p.isVariant && p.inStock);
+        const parents = chosen.length - buyable.length;
+        const say = (t) => pickbar.append(el('span', 'sku-search-sent', t));
+        if (!buyable.length) {
+          say('Configurable products need a color and size. Use "Choose color and size" on the card.');
+          return;
+        }
+        add.disabled = true;
+        try {
+          await addVariantsToCart(buyable.map((p) => ({ p, qty: state.qty.get(p.key) || 1 })));
+          say(`Added ${buyable.length} item${buyable.length === 1 ? '' : 's'} to your cart.${parents ? ` ${parents} configurable product${parents === 1 ? ' needs' : 's need'} a color and size first.` : ''}`);
+        } catch (e) {
+          say(e?.message || 'Could not add to cart.');
+        } finally {
+          add.disabled = false;
+        }
       });
       const exp = el('button', 'sku-search-secondary', 'Export CSV');
       exp.type = 'button';
@@ -732,8 +844,17 @@ export default async function decorate(block) {
     state.result = null;
     render();
     let products = new Map();
+    let variantHits = new Map();
     try {
       products = valid.length ? await fetchProducts(valid) : new Map();
+      // anything not found as a product may be a color-and-size SKU such as CFM-Newport Navy-L
+      const unresolved = valid.filter((t) => !products.has(t.toLowerCase()) && t.includes('-'));
+      if (unresolved.length) {
+        const parents = [...new Set(unresolved.map((t) => t.split('-')[0].trim()))];
+        const parentProducts = await fetchProducts(parents.filter((s) => !products.has(s.toLowerCase())));
+        parentProducts.forEach((v, k) => products.set(k, v));
+        variantHits = await fetchVariantMatches(parents.filter((s) => products.has(s.toLowerCase())));
+      }
     } catch (e) {
       console.debug('SKU search failed', e);
       state.error = e?.message || 'The request failed.';
@@ -752,6 +873,36 @@ export default async function decorate(block) {
         });
         return;
       }
+      const hit = variantHits.get(t.toLowerCase());
+      if (hit) {
+        const parent = products.get(hit.parent.toLowerCase());
+        const vp = hit.product;
+        const final = amount(vp.price?.final);
+        const f = final ? figures({ final, regular: amount(vp.price?.regular) || final }, { sku: parent.sku }) : null;
+        const remainder = vp.sku.slice(parent.sku.length).replace(/^-/, '');
+        const picUrl = fixUrl(vp.images?.[0]?.url) || parent.image;
+        if (vp.inStock === false) {
+          missing.push({
+            sku: t, kind: 'No inventory', group: 'inventory', why: `${parent.name} (${remainder.replace(/-/g, ' / ')}) has no inventory right now.`,
+          });
+          return;
+        }
+        found.push({
+          ...parent,
+          key: vp.sku,
+          sku: vp.sku,
+          isVariant: true,
+          variantLabel: remainder.replace(/-/g, ' / '),
+          selections: hit.selections,
+          image: picUrl,
+          wholesale: f ? f.wholesale : parent.wholesale,
+          retail: f ? f.msrp : parent.retail,
+          inStock: true,
+          // the tray opens the parent's page with this color and size preselected
+          url: parent.url ? `${parent.url}${parent.url.includes('?') ? '&' : '?'}optionsUIDs=${encodeURIComponent(hit.selections.join(','))}` : '',
+        });
+        return;
+      }
       const p = products.get(t.toLowerCase());
       if (!p) {
         missing.push({
@@ -766,6 +917,7 @@ export default async function decorate(block) {
       }
     });
     if (mockOn) found.forEach((p) => { p.attrs = { ...p.attrs, ...mockAttributes(p) }; });
+    state.qty = new Map();
     state.filters = {};
     state.pending = {};
     state.selected = new Set();
