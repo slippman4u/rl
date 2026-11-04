@@ -15,6 +15,19 @@ import '../../scripts/initializers/cart.js';
  *   Colors | Cream, Black          (which colors to show; default is every color)
  */
 const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL'];
+// Fixed swatch colors. A color whose name contains the word on the left gets the hex on the right.
+// Add a line to cover a new color.
+const COLOR_MAP = {
+  cream: '#f3ead7',
+  black: '#111111',
+  navy: '#1b2a49',
+  white: '#ffffff',
+  heather: '#c9c9cc',
+  red: '#a4262c',
+  green: '#2e5e3e',
+  grey: '#8a8a8a',
+  gray: '#8a8a8a',
+};
 const fmt = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
 
 function el(tag, cls, text) {
@@ -117,7 +130,8 @@ export default async function decorate(block) {
     th.append(inner);
     const first = variants.find((v) => hasChoice(v, colorOpt, color));
     // swatch: the color's own value (hex or image) from Commerce; else the variant photo
-    const raw = String(color.value || '').trim();
+    const mapped = Object.keys(COLOR_MAP).find((k) => norm(color.label).includes(k));
+    const raw = mapped ? COLOR_MAP[mapped] : String(color.value || '').trim();
     const swatch = el('span', 'size-grid-swatch');
     swatch.setAttribute('aria-hidden', 'true');
     const img = first?.product?.images?.[0]?.url;
