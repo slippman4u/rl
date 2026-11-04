@@ -1,6 +1,7 @@
 import { CS_FETCH_GRAPHQL, getProductLink } from '../../scripts/commerce.js';
 import { figures } from '../../scripts/wholesale-mock.js';
 import { readBlockConfig } from '../../scripts/aem.js';
+import '../../scripts/initializers/cart.js';
 
 /*
  * SKU search: paste a list of SKUs or import a CSV and the page pulls up those products from your
@@ -220,6 +221,111 @@ function buildFacets(products) {
       });
     });
   return facets;
+}
+
+/* ---------- Quick view tray: the product's real page, sliding in from the right ---------- */
+let trayInstance = null;
+
+async function refreshParentCart() {
+  try {
+    const api = await import('@dropins/storefront-cart/api.js');
+    if (typeof api.refreshCart === 'function') await api.refreshCart();
+  } catch (e) {
+    // the cart refreshes on the next page load
+  }
+}
+
+function setBackgroundInert(inert) {
+  document.querySelectorAll('body > header, body > main, body > footer').forEach((node) => {
+    node.inert = inert;
+  });
+}
+
+function getTray() {
+  if (trayInstance) return trayInstance;
+
+  const overlay = el('div', 'ss-tray-overlay');
+  overlay.hidden = true;
+  const panel = el('aside', 'ss-tray');
+  panel.setAttribute('role', 'dialog');
+  panel.setAttribute('aria-modal', 'true');
+  panel.setAttribute('aria-label', 'Quick view');
+
+  const bar = el('div', 'ss-tray-bar');
+  const title = el('span', 'ss-tray-title', '');
+  const full = el('a', 'ss-tray-full', 'Open full page');
+  full.target = '_blank';
+  full.rel = 'noopener';
+  const close = el('button', 'ss-tray-close', '×');
+  close.type = 'button';
+  close.setAttribute('aria-label', 'Close quick view');
+  bar.append(title, full, close);
+
+  const loading = el('p', 'ss-tray-loading', 'Loading…');
+  const frame = el('iframe', 'ss-tray-frame');
+  frame.title = 'Product quick view';
+  panel.append(bar, loading, frame);
+  overlay.append(panel);
+  document.body.append(overlay);
+
+  let opener = null;
+
+  function closeTray() {
+    if (overlay.hidden || !overlay.classList.contains('is-open')) return;
+    overlay.classList.remove('is-open');
+    document.documentElement.classList.remove('ss-tray-open');
+    setBackgroundInert(false);
+    setTimeout(() => { overlay.hidden = true; }, 300);
+    if (opener) opener.focus();
+    refreshParentCart(); // the bag in the header picks up what was added
+  }
+
+  frame.addEventListener('load', () => {
+    loading.hidden = true;
+    frame.classList.add('is-ready');
+    try {
+      const doc = frame.contentWindow.document;
+      // inside the tray, show only the product: no site header or footer
+      const style = doc.createElement('style');
+      style.textContent = 'body > header, body > footer { display: none !important; } body > main { padding-top: 0 !important; margin-top: 0 !important; }';
+      doc.head.append(style);
+      doc.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTray(); });
+    } catch (e) {
+      // the framed page is not same-origin; the close button still works
+    }
+  });
+
+  close.addEventListener('click', closeTray);
+  overlay.addEventListener('click', (e) => { if (e.target === overlay) closeTray(); });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeTray(); });
+
+  function open(page, name, openerEl) {
+    opener = openerEl;
+    full.href = page;
+    title.textContent = name;
+    panel.setAttribute('aria-label', `Quick view: ${name}`);
+    if (frame.dataset.page !== page) {
+      loading.hidden = false;
+      frame.classList.remove('is-ready');
+      frame.dataset.page = page;
+      frame.src = page;
+    }
+    overlay.hidden = false;
+    requestAnimationFrame(() => overlay.classList.add('is-open'));
+    document.documentElement.classList.add('ss-tray-open');
+    setBackgroundInert(true);
+    close.focus();
+  }
+
+  trayInstance = { open, close: closeTray };
+  return trayInstance;
+}
+
+/** Open the tray on a normal click; leave ctrl/cmd/middle clicks to open a new tab. */
+function openInTray(e, p, openerEl) {
+  if (!p.url || e.metaKey || e.ctrlKey || e.shiftKey || e.button === 1) return;
+  e.preventDefault();
+  getTray().open(p.url, p.name, openerEl);
 }
 
 export default async function decorate(block) {
@@ -445,6 +551,10 @@ export default async function decorate(block) {
       img.addEventListener('error', () => img.remove());
       tile.append(img);
     }
+    if (p.url) {
+      tile.classList.add('is-clickable');
+      tile.addEventListener('click', (e) => openInTray(e, p, tile));
+    }
     a.append(tile);
 
     const body = el('div', 'sku-search-card-body');
@@ -452,6 +562,7 @@ export default async function decorate(block) {
     if (p.url) {
       const link = el('a', '', p.name);
       link.href = p.url;
+      link.addEventListener('click', (e) => openInTray(e, p, link));
       h.append(link);
     } else {
       h.textContent = p.name;
@@ -477,8 +588,9 @@ export default async function decorate(block) {
     pick.append(cb, el('span', '', 'Select'));
     foot.append(pick);
     if (p.url) {
-      const view = el('a', 'sku-search-viewlink', 'View');
+      const view = el('a', 'sku-search-viewlink', 'Quick view');
       view.href = p.url;
+      view.addEventListener('click', (e) => openInTray(e, p, view));
       foot.append(view);
     }
     body.append(foot);
