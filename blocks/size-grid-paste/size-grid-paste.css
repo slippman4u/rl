@@ -23,6 +23,59 @@
   cursor: not-allowed;
 }
 
+/* the dialog sits on the page body, outside the block */
+.size-grid-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px;
+  border: 0;
+  background: #fff;
+  color: #0d1b3a;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 25%);
+}
+
+.size-grid-dialog::backdrop {
+  background: rgb(13 27 58 / 45%);
+}
+
+.size-grid-dialog h3 {
+  margin: 0 0 8px;
+  font-weight: 300;
+  font-size: 2.4rem;
+  line-height: 1.2;
+}
+
+.size-grid-dialog p {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+}
+
+.size-grid-dialog .size-grid-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.size-grid-dialog .size-grid-dialog-actions button {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 28px;
+  border: 1px solid #0d1b3a;
+  border-radius: 0;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: none;
+}
+
+.size-grid-dialog .size-grid-dialog-cancel {
+  background: transparent;
+  color: #0d1b3a;
+}
+
+.size-grid-dialog .size-grid-dialog-ok {
+  background: #0d1b3a;
+  color: #fff;
+}
+
 .size-grid-paste {
   margin: 0 0 16px;
 }
