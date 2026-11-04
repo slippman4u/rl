@@ -88,6 +88,38 @@ export default async function decorate(block) {
     setMessage(n ? `Pasted ${n} quantit${n === 1 ? 'y' : 'ies'}.` : 'Nothing to paste. Copy numbers like 0 1 1 1 4.', n > 0);
   });
 
+  // Clear button, next to Add to cart, with an "are you sure" prompt
+  const addButton = block.querySelector('.size-grid-add');
+  if (addButton) {
+    const clear = document.createElement('button');
+    clear.type = 'button';
+    clear.className = 'size-grid-clear';
+    clear.textContent = 'Clear';
+    const actions = document.createElement('div');
+    actions.className = 'size-grid-actions';
+    addButton.before(actions);
+    actions.append(clear, addButton);
+
+    const hasQuantities = () => [...table.querySelectorAll('.size-grid-qty')]
+      .some((i) => Number(i.value) > 0);
+    const refresh = () => { clear.disabled = !hasQuantities(); };
+    table.addEventListener('input', refresh);
+    table.addEventListener('click', () => setTimeout(refresh, 0));
+    addButton.addEventListener('click', () => setTimeout(refresh, 600));
+    refresh();
+
+    clear.addEventListener('click', () => {
+      // eslint-disable-next-line no-alert
+      if (!window.confirm('Clear all quantities in the grid?')) return;
+      table.querySelectorAll('.size-grid-qty').forEach((input) => {
+        input.value = '0';
+        input.dispatchEvent(new Event('input', { bubbles: true }));
+      });
+      setMessage('Quantities cleared.');
+      refresh();
+    });
+  }
+
   // 2. a dedicated paste box above the grid
   const wrap = document.createElement('div');
   wrap.className = 'size-grid-paste';
