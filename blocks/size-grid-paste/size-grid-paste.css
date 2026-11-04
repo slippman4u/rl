@@ -1,0 +1,20 @@
+.size-grid-paste {
+  margin: 0 0 16px;
+}
+
+.size-grid-paste label {
+  display: block;
+  font-weight: 600;
+}
+
+.size-grid-paste textarea {
+  display: block;
+  width: 100%;
+  box-sizing: border-box;
+  margin-top: 6px;
+  padding: 10px;
+  font: inherit;
+  border: 1px dashed #b9b6b1;
+  background: #faf9f8;
+  resize: vertical;
+}
