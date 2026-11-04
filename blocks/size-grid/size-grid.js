@@ -113,14 +113,16 @@ export default async function decorate(block) {
   colors.forEach((color, r) => {
     const tr = el('tr');
     const th = el('th', 'size-grid-color');
+    const inner = el('div', 'size-grid-color-inner');
+    th.append(inner);
     const first = variants.find((v) => hasChoice(v, colorOpt, color));
     const img = first?.product?.images?.[0]?.url;
     if (img) {
       const i = el('img', 'size-grid-thumb');
       i.src = img; i.alt = ''; i.loading = 'lazy';
-      th.append(i);
+      inner.append(i);
     }
-    th.append(el('span', '', color.label));
+    inner.append(el('span', '', color.label));
     tr.append(th);
     sizes.forEach((size, c) => {
       const td = el('td');
