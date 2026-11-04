@@ -528,3 +528,7 @@
   min-height: 140px;
 }
 
+.sku-search .sku-search-tile {
+  background: #f0efed;
+  color: #0d1b3a;
+}
