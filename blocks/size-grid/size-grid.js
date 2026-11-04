@@ -116,12 +116,21 @@ export default async function decorate(block) {
     const inner = el('div', 'size-grid-color-inner');
     th.append(inner);
     const first = variants.find((v) => hasChoice(v, colorOpt, color));
+    // swatch: the color's own value (hex or image) from Commerce; else the variant photo
+    const raw = String(color.value || '').trim();
+    const swatch = el('span', 'size-grid-swatch');
+    swatch.setAttribute('aria-hidden', 'true');
     const img = first?.product?.images?.[0]?.url;
-    if (img) {
-      const i = el('img', 'size-grid-thumb');
-      i.src = img; i.alt = ''; i.loading = 'lazy';
-      inner.append(i);
+    if (/^#[0-9a-f]{3,8}$/i.test(raw)) {
+      swatch.style.backgroundColor = raw;
+    } else if (/^(https?:)?\/\//.test(raw) || raw.startsWith('/')) {
+      swatch.style.backgroundImage = `url("${encodeURI(raw)}")`;
+    } else if (img) {
+      swatch.style.backgroundImage = `url("${encodeURI(img)}")`;
+    } else {
+      swatch.classList.add('is-empty');
     }
+    inner.append(swatch);
     inner.append(el('span', '', color.label));
     tr.append(th);
     sizes.forEach((size, c) => {
