@@ -49,6 +49,7 @@ function parseCsv(text) {
   return rows.flat().filter(Boolean);
 }
 
+const fixUrl = (u) => (u && u.startsWith('//') ? `https:${u}` : u || '');
 const amount = (a) => (a?.amount?.value !== undefined ? Number(a.amount.value) : 0);
 
 /** Ask Commerce for these SKUs. Returns normalized products, keyed by lower-case SKU. */
@@ -59,7 +60,7 @@ async function fetchProducts(skus) {
       name
       urlKey
       inStock
-      images(roles: ["image"]) { url }
+      images { url roles }
       attributes { name label value }
       ... on SimpleProductView {
         price {
@@ -90,13 +91,15 @@ async function fetchProducts(skus) {
     const final = amount(p.price?.final) || amount(p.priceRange?.minimum?.final);
     const regular = amount(p.price?.regular) || amount(p.priceRange?.minimum?.regular) || final;
     const f = figures({ final, regular }, { sku: p.sku });
-    let image = p.images?.[0]?.url || '';
-    if (image.startsWith('//')) image = `https:${image}`;
+    const imgs = p.images || [];
+    const best = ['image', 'small_image', 'thumbnail'].map((r) => imgs.find((i) => (i.roles || []).includes(r))).find(Boolean) || imgs[0];
+    const image = fixUrl(best?.url);
     const attrs = {};
     (p.attributes || []).forEach((a) => {
       const label = String(a.label || '').trim();
       const value = String(a.value ?? '').trim();
       if (!label || !value || SKIP_ATTRIBUTES.test(a.name || '')) return;
+      if (/^AC /i.test(label) || /\[object/i.test(value)) return;
       if (value.length > 40 || /^https?:|^\/|^\d{6,}$/.test(value)) return;
       (attrs[label] = attrs[label] || new Set()).add(value);
     });
@@ -111,6 +114,22 @@ async function fetchProducts(skus) {
       attrs: Object.fromEntries(Object.entries(attrs).map(([k, v]) => [k, [...v]])),
     });
   });
+  // Configurable products often keep their pictures on the variants. Borrow the first one.
+  await Promise.all([...out.values()].filter((p) => !p.image).map(async (p) => {
+    try {
+      const res = await CS_FETCH_GRAPHQL.fetchGraphQl(
+        `query GET_VARIANT_IMAGE($sku: String!) {
+          variants(sku: $sku) {
+            variants { product { images(roles: ["image"]) { url } } }
+          }
+        }`,
+        { method: 'GET', variables: { sku: p.sku } },
+      );
+      const hit = (res?.data?.variants?.variants || [])
+        .map((v) => v?.product?.images?.[0]?.url).find(Boolean);
+      if (hit) p.image = fixUrl(hit);
+    } catch (e) { /* no picture: the grey tile stays */ }
+  }));
   return out;
 }
 
@@ -339,7 +358,7 @@ export default async function decorate(block) {
       img.addEventListener('error', () => img.remove());
       tile.append(img);
     }
-    tile.append(el('span', 'sku-search-tile-sku', p.sku));
+    tile.append(el('span', 'sku-search-tile-sku', p.sku.toUpperCase()));
     const pick = el('label', 'sku-search-pick');
     const cb = el('input');
     cb.type = 'checkbox';
