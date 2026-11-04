@@ -271,7 +271,30 @@
   color: #fff;
 }
 
+.sku-search .sku-search-tile {
+  position: relative;
+  overflow: hidden;
+}
+
 .sku-search .sku-search-tile.is-light {
+  color: #0d1b3a;
+}
+
+.sku-search .sku-search-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.sku-search .sku-search-tile-sku {
+  position: relative;
+}
+
+.sku-search .sku-search-tile:has(.sku-search-img) .sku-search-tile-sku {
+  padding: 2px 8px;
+  background: rgb(255 255 255 / 85%);
   color: #0d1b3a;
 }
 
