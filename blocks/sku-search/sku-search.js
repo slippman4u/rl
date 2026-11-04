@@ -265,6 +265,29 @@ function buildFacets(products) {
   return facets;
 }
 
+/** A confirmation dialog styled like the site (not the browser's). Resolves true or false. */
+function confirmDialog(title, text, okLabel) {
+  return new Promise((resolve) => {
+    const dialog = el('dialog', 'ss-dialog');
+    const row = el('div', 'ss-dialog-actions');
+    const cancel = el('button', 'ss-dialog-cancel', 'Cancel');
+    cancel.type = 'button';
+    const ok = el('button', 'ss-dialog-ok', okLabel);
+    ok.type = 'button';
+    row.append(cancel, ok);
+    dialog.append(el('h3', '', title), el('p', '', text), row);
+    document.body.append(dialog);
+
+    let answer = false;
+    cancel.addEventListener('click', () => dialog.close());
+    ok.addEventListener('click', () => { answer = true; dialog.close(); });
+    dialog.addEventListener('click', (e) => { if (e.target === dialog) dialog.close(); }); // backdrop
+    dialog.addEventListener('close', () => { dialog.remove(); resolve(answer); });
+    dialog.showModal();
+    cancel.focus();
+  });
+}
+
 /* ---------- Cart: same call the product page grid uses (parent SKU + the variant's option UIDs) ---------- */
 async function addVariantsToCart(items) {
   const { addProductsToCart } = await import('@dropins/storefront-cart/api.js');
@@ -944,7 +967,14 @@ export default async function decorate(block) {
     reader.readAsText(f);
     file.value = '';
   });
-  reset.addEventListener('click', () => { area.value = ''; state.filters = {}; state.pending = {}; run(); });
+  reset.addEventListener('click', async () => {
+    // nothing to lose when the box is already empty
+    if (area.value.trim() && !await confirmDialog('Clear this search?', 'Your SKU list, results, filters and selections will be removed.', 'Clear')) return;
+    area.value = '';
+    state.filters = {};
+    state.pending = {};
+    run();
+  });
 
   render();
 }
