@@ -90,30 +90,46 @@
 }
 
 .size-grid .size-grid-stepper .size-grid-qty {
-  width: 52px;
+  width: 48px;
+  min-width: 0;
+  margin: 0;
   border: 0;
   border-radius: 0;
 }
 
-.size-grid .size-grid-step {
+/* the +/- sit inside the one outlined box, with no button chrome of their own */
+.size-grid .size-grid-stepper .size-grid-step {
+  flex: 0 0 auto;
   width: 30px;
+  min-width: 0;
+  height: auto;
+  margin: 0;
   padding: 0;
   border: 0;
-  background: #fff;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
   font: inherit;
-  font-size: 1.8rem;
+  font-size: 2rem;
   line-height: 1;
   color: #0d1b3a;
   cursor: pointer;
 }
 
-.size-grid .size-grid-step:hover {
+.size-grid .size-grid-stepper .size-grid-step:hover,
+.size-grid .size-grid-stepper .size-grid-step:focus-visible {
   background: #f0efed;
+  color: #0d1b3a;
+}
+
+.size-grid .size-grid-stepper .size-grid-qty {
+  background: transparent;
+  box-shadow: none;
 }
 
 @media (width < 900px) {
-  .size-grid .size-grid-stepper .size-grid-qty { width: 36px; }
-  .size-grid .size-grid-step { width: 24px; }
+  .size-grid .size-grid-stepper .size-grid-qty { width: 32px; }
+  .size-grid .size-grid-stepper .size-grid-step { width: 22px; }
 }
 
 .size-grid .size-grid-qty::-webkit-outer-spin-button,
