@@ -1,5 +1,6 @@
 import { CS_FETCH_GRAPHQL, getProductLink } from '../../scripts/commerce.js';
 import { figures } from '../../scripts/wholesale-mock.js';
+import { readBlockConfig } from '../../scripts/aem.js';
 
 /*
  * SKU search: paste a list of SKUs or import a CSV and the page pulls up those products from your
@@ -31,6 +32,70 @@ function priceBucket(v) {
   return '$100 and over';
 }
 const PRICE_ORDER = ['Under $40', '$40 to $69', '$70 to $99', '$100 and over'];
+
+// ---- Demo attributes -------------------------------------------------------------------------
+// Your products do not carry these attributes in Commerce yet, so the page fills them in with
+// sample values to show what deep faceting looks like. Turn it off with a block row:
+//   Mock Facets | off
+// Known styles get sensible values; any other SKU gets values picked from the lists below.
+const POOLS = {
+  'Merch Division': ['Polo Core', 'Purple Label', 'Collection', 'Casual', 'Tailored'],
+  Brand: ['Polo Ralph Lauren', 'Ralph Lauren Collection', 'Purple Label', 'RRL'],
+  'Web Seasons': ['Fall 2026', 'Holiday 2026', 'Spring 2027'],
+  'Selling Season': ['Fall', 'Holiday', 'Spring', 'Seasonless'],
+  Age: ['Adult', 'Big & Tall'],
+  Concept: ['Core', 'Seasonal', 'Heritage', 'Fashion'],
+  'WHS Zone': ['Zone 1', 'Zone 2', 'Zone 3'],
+  'Fashion Degree': ['Basic', 'Core', 'Fashion'],
+  'Assortment Lifestyle': ['Heritage', 'Preppy', 'Country', 'Sport'],
+};
+const KNOWN = {
+  cfm: { Category: 'Polo Shirts', Class: 'Knit Polos', Material: 'Cotton mesh', Pattern: 'Striped', 'Cut / Fit': 'Classic Fit', Color: ['Navy', 'Red', 'Cream'], Department: 'Knits & Polos' },
+  cfk: { Category: 'Polo Shirts', Class: 'Knit Polos', Material: 'Corduroy knit', Pattern: 'Solid', 'Cut / Fit': 'Classic Fit', Color: ['Navy', 'Brown'], Department: 'Knits & Polos' },
+  cmp: { Category: 'Polo Shirts', Class: 'Knit Polos', Material: 'Cotton mesh', Pattern: 'Camo', 'Cut / Fit': 'Custom Slim Fit', Color: ['Olive', 'Brown'], Department: 'Knits & Polos' },
+  rfk: { Category: 'Polo Shirts', Class: 'Knit Polos', Material: 'Corduroy knit', Pattern: 'Solid', 'Cut / Fit': 'Relaxed Fit', Color: ['Brown', 'Navy', 'Khaki', 'Green', 'Cream', 'Black'], Department: 'Knits & Polos' },
+  blb: { Category: 'Belts', Class: 'Leather Belts', Material: 'Leather', Pattern: 'Solid', 'Cut / Fit': 'One Size', Color: ['Brown'], Department: 'Accessories' },
+  cbcs: { Category: 'Socks', Class: 'Dress Socks', Material: 'Cotton blend', Pattern: 'Ribbed', 'Cut / Fit': 'One Size', Color: ['Navy'], Department: 'Accessories' },
+  epl: { Category: 'Shoes', Class: 'Loafers', Material: 'Leather', Pattern: 'Solid', 'Cut / Fit': 'One Size', Color: ['Black'], Department: 'Footwear' },
+  pwf: { Category: 'Trousers', Class: 'Dress Trousers', Material: 'Wool flannel', Pattern: 'Solid', 'Cut / Fit': 'Pleated', Color: ['Grey'], Department: 'Bottoms' },
+};
+const GENERIC = {
+  Category: ['Polo Shirts', 'Trousers', 'Sweaters', 'Outerwear', 'Belts', 'Shoes'],
+  Class: ['Knit Polos', 'Dress Trousers', 'Crewneck Sweaters', 'Leather Belts'],
+  Material: ['Cotton mesh', 'Wool flannel', 'Leather', 'Cotton blend', 'Merino wool'],
+  Pattern: ['Solid', 'Striped', 'Plaid', 'Camo'],
+  'Cut / Fit': ['Classic Fit', 'Custom Slim Fit', 'Relaxed Fit'],
+  Color: ['Navy', 'Black', 'Brown', 'Cream', 'Olive', 'Grey'],
+  Department: ['Knits & Polos', 'Wovens', 'Bottoms', 'Accessories', 'Footwear', 'Outerwear'],
+};
+const SIZE_RANGE = {
+  'Polo Shirts': 'XS to XXL', Trousers: '30 to 38 waist', Sweaters: 'XS to XXL', Outerwear: 'S to XXL', Belts: '32 to 40', Shoes: '7 to 13', Socks: 'One Size',
+};
+const SWATCH = {
+  Navy: '#1b2a49', Red: '#a4262c', Cream: '#f3ead7', Brown: '#81422C', Olive: '#6b6b3a', Khaki: '#C4B289', Green: '#2e5e3e', Black: '#111111', Grey: '#8a8a8a', White: '#ffffff',
+};
+const hash = (str) => [...String(str)].reduce((h, c) => ((h * 31) + c.charCodeAt(0)) >>> 0, 7);
+const pickFrom = (list, seed, n = 0) => list[(hash(seed) + n * 7) % list.length];
+
+function mockAttributes(p) {
+  const key = p.sku.toLowerCase();
+  const known = KNOWN[key] || {};
+  const out = {};
+  Object.entries(POOLS).forEach(([label, pool], i) => { out[label] = [pickFrom(pool, key + label, i)]; });
+  Object.entries(GENERIC).forEach(([label, pool]) => {
+    out[label] = label === 'Color' ? [pickFrom(pool, key), pickFrom(pool, key, 3)] : [pickFrom(pool, key + label)];
+  });
+  Object.entries(known).forEach(([label, v]) => { out[label] = Array.isArray(v) ? v : [v]; });
+  const dept = out.Department[0];
+  out['Size range'] = [SIZE_RANGE[out.Category[0]] || 'S to XXL'];
+  out['Reporting Division'] = [dept === 'Accessories' || dept === 'Footwear' ? dept : 'Menswear'];
+  out.Gender = ['Men'];
+  return out;
+}
+
+// the order facets appear in, like Ralph Lauren's own screens
+const FACET_ORDER = ['Price (wholesale)', 'Reporting Division', 'Merch Division', 'Brand', 'Department', 'Category', 'Class', 'Color', 'Material', 'Pattern', 'Cut / Fit', 'Size range', 'Gender', 'Age', 'Web Seasons', 'Selling Season', 'Concept', 'Fashion Degree', 'Assortment Lifestyle', 'WHS Zone'];
+
 
 /** Turn pasted text into a list of SKUs: split on lines, tabs, commas and semicolons. */
 function tokenize(text) {
@@ -147,17 +212,21 @@ function buildFacets(products) {
   }));
   [...labels.entries()]
     .filter(([, values]) => values.size >= 2 && values.size <= 40)
-    .sort((a, b) => a[0].localeCompare(b[0]))
-    .slice(0, 14)
+    .sort((a, b) => ((FACET_ORDER.indexOf(a[0]) + 1) || 99) - ((FACET_ORDER.indexOf(b[0]) + 1) || 99) || a[0].localeCompare(b[0]))
+    .slice(0, 24)
     .forEach(([label]) => {
-      facets.push({ key: `attr:${label}`, label, get: (p) => p.attrs[label] || [] });
+      facets.push({
+        key: `attr:${label}`, label, get: (p) => p.attrs[label] || [], swatch: label === 'Color',
+      });
     });
   return facets;
 }
 
 export default async function decorate(block) {
+  const config = readBlockConfig(block);
+  const mockOn = !/^(off|false|no)$/i.test(String(config['mock-facets'] || 'on'));
   const state = {
-    result: null, filters: {}, sort: 'list', open: {}, more: {}, selected: new Set(), view: '3', facets: [], busy: false, error: '',
+    result: null, filters: {}, pending: {}, sortBy: 'list', dir: 'asc', open: {}, more: {}, selected: new Set(), view: '5', facets: [], busy: false, error: '', panel: true,
   };
 
   block.textContent = '';
@@ -203,10 +272,14 @@ export default async function decorate(block) {
 
   function visible() {
     if (!state.result) return [];
-    let list = state.result.found.filter((p) => passes(p));
-    if (state.sort === 'priceAsc') list = list.slice().sort((a, b) => a.wholesale - b.wholesale);
-    if (state.sort === 'priceDesc') list = list.slice().sort((a, b) => b.wholesale - a.wholesale);
-    if (state.sort === 'name') list = list.slice().sort((a, b) => a.name.localeCompare(b.name));
+    const list = state.result.found.filter((p) => passes(p));
+    const by = {
+      name: (x, y) => x.name.localeCompare(y.name),
+      price: (x, y) => x.wholesale - y.wholesale,
+      sku: (x, y) => x.sku.localeCompare(y.sku),
+    }[state.sortBy];
+    if (by) list.sort(by);
+    if (state.dir === 'desc') list.reverse();
     return list;
   }
 
@@ -278,38 +351,46 @@ export default async function decorate(block) {
 
   function renderFacets() {
     facetBox.replaceChildren();
+    facetBox.hidden = !state.panel;
+    layout.classList.toggle('is-collapsed', !state.panel);
     if (!state.result || !state.result.found.length) return;
     const head = el('div', 'sku-search-facets-head');
-    head.append(el('h2', '', 'Filter'));
-    if (Object.values(state.filters).some((s) => s.size)) {
-      const clr = el('button', 'sku-search-link', 'Clear all');
-      clr.type = 'button';
-      clr.addEventListener('click', () => { state.filters = {}; render(); });
-      head.append(clr);
-    }
+    head.append(el('h2', '', 'Filter options'));
     facetBox.append(head);
+    const btns = el('div', 'sku-search-facet-buttons');
+    const apply = el('button', 'sku-search-go', 'Apply');
+    apply.type = 'button';
+    apply.addEventListener('click', () => {
+      state.filters = Object.fromEntries(Object.entries(state.pending).map(([k, v]) => [k, new Set(v)]));
+      render();
+    });
+    const clr = el('button', 'sku-search-secondary', 'Reset');
+    clr.type = 'button';
+    clr.addEventListener('click', () => { state.filters = {}; state.pending = {}; render(); });
+    btns.append(apply, clr);
+    facetBox.append(btns);
 
     state.facets.forEach((f, index) => {
-      // counts reflect every other active filter, so the numbers stay honest
+      // counts reflect every applied filter except this facet's own
       const counts = new Map();
       state.result.found.filter((p) => passes(p, f.key)).forEach((p) => {
         f.get(p).forEach((v) => counts.set(v, (counts.get(v) || 0) + 1));
       });
-      const picked = state.filters[f.key] || new Set();
+      const picked = state.pending[f.key] || new Set();
       picked.forEach((v) => { if (!counts.has(v)) counts.set(v, 0); });
       if (!counts.size) return;
       const values = [...counts.keys()];
-      if (f.order) values.sort((a, b) => (f.order.indexOf(a) + 1 || 99) - (f.order.indexOf(b) + 1 || 99));
-      else values.sort((a, b) => counts.get(b) - counts.get(a) || a.localeCompare(b));
+      if (f.order) values.sort((x, y) => (f.order.indexOf(x) + 1 || 99) - (f.order.indexOf(y) + 1 || 99));
+      else values.sort((x, y) => counts.get(y) - counts.get(x) || x.localeCompare(y));
 
       const box = el('details', 'sku-search-facet');
-      box.open = state.open[f.key] ?? index < 5; // the first few start open
+      box.open = state.open[f.key] ?? index < 2;
       box.addEventListener('toggle', () => { state.open[f.key] = box.open; });
       const sum = el('summary', '', f.label);
       if (picked.size) sum.append(el('span', 'sku-search-badge', String(picked.size)));
       box.append(sum);
 
-      const limit = 6;
+      const limit = 8;
       const showAll = state.more[f.key];
       (showAll ? values : values.slice(0, limit)).forEach((v) => {
         const row = el('label', 'sku-search-opt');
@@ -317,12 +398,18 @@ export default async function decorate(block) {
         cb.type = 'checkbox';
         cb.checked = picked.has(v);
         cb.addEventListener('change', () => {
-          const set = state.filters[f.key] || new Set();
+          const set = state.pending[f.key] || new Set();
           if (cb.checked) set.add(v); else set.delete(v);
-          state.filters[f.key] = set;
-          render();
+          state.pending[f.key] = set;
+          renderFacets();
         });
-        row.append(cb, el('span', 'sku-search-opt-label', v), el('span', 'sku-search-opt-count', String(counts.get(v))));
+        row.append(cb);
+        if (f.swatch) {
+          const sw = el('span', 'sku-search-dot');
+          sw.style.backgroundColor = SWATCH[v] || '#ddd';
+          row.append(sw);
+        }
+        row.append(el('span', 'sku-search-opt-label', v), el('span', 'sku-search-opt-count', String(counts.get(v))));
         box.append(row);
       });
       if (values.length > limit) {
@@ -341,7 +428,7 @@ export default async function decorate(block) {
       const c = el('button', 'sku-search-chip', `${v} ×`);
       c.type = 'button';
       c.setAttribute('aria-label', `Remove filter ${v}`);
-      c.addEventListener('click', () => { state.filters[f.key].delete(v); render(); });
+      c.addEventListener('click', () => { state.filters[f.key].delete(v); state.pending[f.key]?.delete(v); render(); });
       wrap.append(c);
     }));
     return wrap;
@@ -358,18 +445,6 @@ export default async function decorate(block) {
       img.addEventListener('error', () => img.remove());
       tile.append(img);
     }
-    tile.append(el('span', 'sku-search-tile-sku', p.sku.toUpperCase()));
-    const pick = el('label', 'sku-search-pick');
-    const cb = el('input');
-    cb.type = 'checkbox';
-    cb.checked = state.selected.has(p.sku);
-    cb.setAttribute('aria-label', `Select ${p.name}`);
-    cb.addEventListener('change', () => {
-      if (cb.checked) state.selected.add(p.sku); else state.selected.delete(p.sku);
-      renderMain();
-    });
-    pick.append(cb);
-    tile.append(pick);
     a.append(tile);
 
     const body = el('div', 'sku-search-card-body');
@@ -382,14 +457,31 @@ export default async function decorate(block) {
       h.textContent = p.name;
     }
     body.append(h);
-    body.append(el('div', 'sku-search-meta', p.sku));
+    body.append(el('div', 'sku-search-meta', `SKU ${p.sku.toUpperCase()}`));
+    const colors = p.attrs.Color || p.attrs.Colour;
+    if (colors) body.append(el('div', 'sku-search-meta', `Color: ${colors.join(' / ')}`));
     const price = el('div', 'sku-search-price');
     price.append(el('span', '', 'Wholesale: '), el('strong', '', money(p.wholesale)), el('span', 'sku-search-msrp', `MSRP: ${money(p.retail)}`));
     body.append(price);
-    Object.entries(p.attrs).slice(0, 3).forEach(([k, v]) => {
-      body.append(el('div', 'sku-search-meta', `${k}: ${v.slice(0, 2).join(', ')}`));
-    });
     body.append(el('span', `sku-search-stock ${p.inStock ? '' : 'is-out-of-stock'}`, p.inStock ? 'In stock' : 'Out of stock'));
+
+    const foot = el('div', 'sku-search-cardfoot');
+    const pick = el('label', 'sku-search-pick');
+    const cb = el('input');
+    cb.type = 'checkbox';
+    cb.checked = state.selected.has(p.sku);
+    cb.addEventListener('change', () => {
+      if (cb.checked) state.selected.add(p.sku); else state.selected.delete(p.sku);
+      renderMain();
+    });
+    pick.append(cb, el('span', '', 'Select'));
+    foot.append(pick);
+    if (p.url) {
+      const view = el('a', 'sku-search-viewlink', 'View');
+      view.href = p.url;
+      foot.append(view);
+    }
+    body.append(foot);
     a.append(body);
     return a;
   }
@@ -416,61 +508,82 @@ export default async function decorate(block) {
       return;
     }
     const list = visible();
-    const bar = el('div', 'sku-search-bar');
-    bar.append(el('span', 'sku-search-results', `${list.length} product${list.length === 1 ? '' : 's'}`));
-    const sortLabel = el('label', 'sku-search-sort', 'Sort ');
-    const sel = el('select');
-    [['list', 'Order of your list'], ['name', 'Name'], ['priceAsc', 'Price: low to high'], ['priceDesc', 'Price: high to low']].forEach(([v, t]) => {
-      const o = el('option', '', t);
-      o.value = v;
-      o.selected = state.sort === v;
-      sel.append(o);
-    });
-    sel.addEventListener('change', () => { state.sort = sel.value; renderMain(); });
-    sortLabel.append(sel);
-    bar.append(sortLabel);
-    const views = el('div', 'sku-search-views');
+    const total = state.result.found.length;
+
+    // toolbar: collapse, count, selection, view, sort
+    const bar = el('div', 'sku-search-toolbar');
+    const toggle = el('button', 'sku-search-collapse', state.panel ? '‹' : '›');
+    toggle.type = 'button';
+    toggle.setAttribute('aria-label', state.panel ? 'Hide filters' : 'Show filters');
+    toggle.addEventListener('click', () => { state.panel = !state.panel; render(); });
+    bar.append(toggle, el('span', 'sku-search-results', `Search Results (${list.length}${list.length !== total ? ` of ${total}` : ''})`));
+
+    const selGroup = el('div', 'sku-search-group');
+    selGroup.append(el('span', '', 'Selection'));
+    const all = el('button', 'sku-search-tiny', 'Select all on page');
+    all.type = 'button';
+    all.addEventListener('click', () => { list.forEach((p) => state.selected.add(p.sku)); renderMain(); });
+    const none = el('button', 'sku-search-tiny', 'Deselect all');
+    none.type = 'button';
+    none.addEventListener('click', () => { state.selected.clear(); renderMain(); });
+    selGroup.append(all, none);
+    bar.append(selGroup);
+
+    const viewGroup = el('div', 'sku-search-group');
+    viewGroup.append(el('span', '', 'View'));
     [['3', 'Large'], ['5', 'Small'], ['list', 'List']].forEach(([v, t]) => {
-      const vb = el('button', `sku-search-view${state.view === v ? ' is-on' : ''}`, t);
+      const vb = el('button', `sku-search-tiny${state.view === v ? ' is-on' : ''}`, t);
       vb.type = 'button';
       vb.addEventListener('click', () => { state.view = v; renderMain(); });
-      views.append(vb);
+      viewGroup.append(vb);
     });
-    bar.append(views);
+    bar.append(viewGroup);
+
+    const sortGroup = el('div', 'sku-search-group');
+    sortGroup.append(el('span', '', 'Sort by'));
+    const dirSel = el('select');
+    [['asc', 'Ascending'], ['desc', 'Descending']].forEach(([v, t]) => {
+      const o = el('option', '', t);
+      o.value = v;
+      o.selected = state.dir === v;
+      dirSel.append(o);
+    });
+    dirSel.addEventListener('change', () => { state.dir = dirSel.value; renderMain(); });
+    const fieldSel = el('select');
+    [['list', 'Order of your list'], ['name', 'Name'], ['price', 'Price'], ['sku', 'SKU']].forEach(([v, t]) => {
+      const o = el('option', '', t);
+      o.value = v;
+      o.selected = state.sortBy === v;
+      fieldSel.append(o);
+    });
+    fieldSel.addEventListener('change', () => { state.sortBy = fieldSel.value; renderMain(); });
+    sortGroup.append(dirSel, fieldSel);
+    bar.append(sortGroup);
     main.append(bar, chips());
-    if (list.length) {
-      const total = state.result.found.length;
-      const pick = el('div', 'sku-search-pickbar');
-      pick.append(el('span', 'sku-search-showing', `Showing ${list.length} of ${total} product${total === 1 ? '' : 's'}`));
-      const all = el('button', 'sku-search-secondary', 'Select all on page');
-      all.type = 'button';
-      all.addEventListener('click', () => { list.forEach((p) => state.selected.add(p.sku)); renderMain(); });
-      const none = el('button', 'sku-search-secondary', 'Deselect all');
-      none.type = 'button';
-      none.addEventListener('click', () => { state.selected.clear(); renderMain(); });
-      pick.append(all, none);
-      const n = state.selected.size;
-      if (n) {
-        pick.append(el('strong', 'sku-search-selected', `${n} selected`));
-        const add = el('button', 'sku-search-go', 'Add to order');
-        add.type = 'button';
-        add.addEventListener('click', () => {
-          pick.querySelector('.sku-search-sent')?.remove();
-          pick.append(el('span', 'sku-search-sent', `${n} style${n === 1 ? '' : 's'} sent to your order (demo).`));
-        });
-        const exp = el('button', 'sku-search-secondary', 'Export CSV');
-        exp.type = 'button';
-        exp.addEventListener('click', exportSelected);
-        pick.append(add, exp);
-      }
-      main.append(pick);
+
+    const n = state.selected.size;
+    if (n) {
+      const pickbar = el('div', 'sku-search-pickbar');
+      pickbar.append(el('strong', 'sku-search-selected', `${n} selected`));
+      const add = el('button', 'sku-search-go', 'Add to order');
+      add.type = 'button';
+      add.addEventListener('click', () => {
+        pickbar.querySelector('.sku-search-sent')?.remove();
+        pickbar.append(el('span', 'sku-search-sent', `${n} style${n === 1 ? '' : 's'} sent to your order (demo).`));
+      });
+      const exp = el('button', 'sku-search-secondary', 'Export CSV');
+      exp.type = 'button';
+      exp.addEventListener('click', exportSelected);
+      pickbar.append(add, exp);
+      main.append(pickbar);
     }
+
     if (!list.length) {
       const empty = el('div', 'sku-search-empty');
-      const has = state.result.found.length > 0;
+      const has = total > 0;
       empty.append(
         el('h2', '', has ? 'No products match these filters' : 'No products found'),
-        el('p', '', has ? 'Remove a filter to see more of your list.' : 'None of the SKUs in your list matched. See the notes above.'),
+        el('p', '', has ? 'Reset the filters to see more of your list.' : 'None of the SKUs in your list matched. See the notes above.'),
       );
       main.append(empty);
       return;
@@ -540,7 +653,9 @@ export default async function decorate(block) {
         found.push(p);
       }
     });
+    if (mockOn) found.forEach((p) => { p.attrs = { ...p.attrs, ...mockAttributes(p) }; });
     state.filters = {};
+    state.pending = {};
     state.selected = new Set();
     state.facets = buildFacets(found);
     state.result = {
@@ -565,7 +680,7 @@ export default async function decorate(block) {
     reader.readAsText(f);
     file.value = '';
   });
-  reset.addEventListener('click', () => { area.value = ''; state.filters = {}; run(); });
+  reset.addEventListener('click', () => { area.value = ''; state.filters = {}; state.pending = {}; run(); });
 
   render();
 }
