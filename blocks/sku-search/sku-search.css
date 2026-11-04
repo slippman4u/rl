@@ -557,3 +557,129 @@
     max-height: none;
   }
 }
+
+.sku-search .sku-search-tile.is-clickable {
+  cursor: pointer;
+}
+
+/* ---------- Quick view tray (sits on the page body, outside the block) ---------- */
+.ss-tray-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background-color: rgb(0 0 0 / 45%);
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.ss-tray-overlay[hidden] {
+  display: none;
+}
+
+.ss-tray-overlay.is-open {
+  opacity: 1;
+}
+
+.ss-tray {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(1040px, 100vw);
+  background-color: #fff;
+  box-shadow: -4px 0 24px rgb(0 0 0 / 16%);
+  transform: translateX(100%);
+  transition: transform 0.3s ease;
+}
+
+.ss-tray-overlay.is-open .ss-tray {
+  transform: none;
+}
+
+.ss-tray-bar {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 16px;
+  border-bottom: 1px solid #e5e3e0;
+}
+
+.ss-tray-title {
+  flex: 1;
+  overflow: hidden;
+  color: #0d1b3a;
+  font-size: 1.4rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ss-tray-full:any-link {
+  color: #0d1b3a;
+  font-size: 1.2rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-decoration: underline;
+}
+
+.ss-tray-close {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #0d1b3a;
+  font-size: 3.2rem;
+  line-height: 40px;
+  cursor: pointer;
+}
+
+.ss-tray-close:focus-visible,
+.ss-tray-full:focus-visible {
+  outline: 2px solid #0d1b3a;
+  outline-offset: 2px;
+}
+
+.ss-tray-loading {
+  position: absolute;
+  top: 64px;
+  right: 0;
+  left: 0;
+  margin: 0;
+  padding: 24px;
+  color: #0d1b3a;
+  font-size: 1.3rem;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.ss-tray-loading[hidden] {
+  display: none;
+}
+
+.ss-tray-frame {
+  flex: 1;
+  width: 100%;
+  border: 0;
+  background-color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+.ss-tray-frame.is-ready {
+  opacity: 1;
+}
+
+html.ss-tray-open {
+  overflow: hidden;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-tray-overlay,
+  .ss-tray {
+    transition: none;
+  }
+}
