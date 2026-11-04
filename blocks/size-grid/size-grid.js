@@ -159,7 +159,22 @@ export default async function decorate(block) {
         input.setAttribute('aria-label', `${color.label}, size ${size.label}`);
         input.addEventListener('focus', () => input.select());
         input.addEventListener('input', update);
-        td.append(input);
+        const step = (delta) => {
+          const next = Math.max(0, (Math.floor(Number(input.value) || 0)) + delta);
+          input.value = String(next);
+          update();
+        };
+        const minus = el('button', 'size-grid-step', '−');
+        const plus = el('button', 'size-grid-step', '+');
+        minus.type = 'button';
+        plus.type = 'button';
+        minus.setAttribute('aria-label', `Decrease ${color.label} ${size.label}`);
+        plus.setAttribute('aria-label', `Increase ${color.label} ${size.label}`);
+        minus.addEventListener('click', () => step(-1));
+        plus.addEventListener('click', () => step(1));
+        const stepper = el('div', 'size-grid-stepper');
+        stepper.append(minus, input, plus);
+        td.append(stepper);
         cells.set(`${r}:${c}`, { variant, input });
       }
       tr.append(td);
