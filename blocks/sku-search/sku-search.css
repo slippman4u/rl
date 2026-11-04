@@ -384,3 +384,146 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+
+/* "Your search for" chips */
+.sku-search .sku-search-yours {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+}
+
+.sku-search .sku-search-group-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 4px 8px;
+  margin-top: 10px;
+}
+
+.sku-search .sku-search-group-list {
+  overflow-wrap: anywhere;
+}
+
+/* selection bar */
+.sku-search .sku-search-pickbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px 12px;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  background: #f0efed;
+}
+
+.sku-search .sku-search-pickbar .sku-search-secondary,
+.sku-search .sku-search-pickbar .sku-search-go {
+  padding: 6px 16px;
+  font-size: 1.4rem;
+}
+
+.sku-search .sku-search-showing {
+  margin-right: auto;
+  font-weight: 600;
+}
+
+.sku-search .sku-search-sent {
+  flex-basis: 100%;
+  color: #1d5a1f;
+}
+
+.sku-search .sku-search-pick {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  display: flex;
+  padding: 4px;
+  background: rgb(255 255 255 / 90%);
+  cursor: pointer;
+}
+
+.sku-search .sku-search-card.is-selected {
+  border-color: #0d1b3a;
+  box-shadow: 0 0 0 1px #0d1b3a;
+}
+
+.sku-search .sku-search-card-body h3 a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.sku-search .sku-search-card-body h3 a:hover {
+  text-decoration: underline;
+}
+
+.sku-search .sku-search-color {
+  margin-bottom: 2px;
+  font-size: 1.3rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sku-search .sku-search-msrp {
+  display: block;
+  color: #6b6b6b;
+}
+
+/* view toggle */
+.sku-search .sku-search-views {
+  display: flex;
+  gap: 4px;
+}
+
+.sku-search .sku-search-view {
+  min-width: 0;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid #b9b6b1;
+  border-radius: 0;
+  background: #fff;
+  color: #0d1b3a;
+  font: inherit;
+  font-size: 1.3rem;
+  cursor: pointer;
+}
+
+.sku-search .sku-search-view.is-on {
+  border-color: #0d1b3a;
+  background: #0d1b3a;
+  color: #fff;
+}
+
+.sku-search .sku-search-bar {
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.sku-search .sku-search-grid[data-view='3'] {
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+}
+
+.sku-search .sku-search-grid[data-view='5'] {
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.sku-search .sku-search-grid[data-view='5'] .sku-search-meta,
+.sku-search .sku-search-grid[data-view='5'] .sku-search-matched,
+.sku-search .sku-search-grid[data-view='5'] .sku-search-dots {
+  display: none;
+}
+
+.sku-search .sku-search-grid[data-view='list'] {
+  grid-template-columns: minmax(0, 1fr);
+  gap: 12px;
+}
+
+.sku-search .sku-search-grid[data-view='list'] .sku-search-card {
+  display: grid;
+  grid-template-columns: 160px minmax(0, 1fr);
+}
+
+.sku-search .sku-search-grid[data-view='list'] .sku-search-tile {
+  aspect-ratio: auto;
+  min-height: 140px;
+}
