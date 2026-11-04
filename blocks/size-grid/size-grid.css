@@ -41,11 +41,19 @@
   font-weight: 600;
 }
 
+.size-grid th,
+.size-grid td {
+  vertical-align: middle;
+}
+
 .size-grid th.size-grid-color {
+  min-width: 180px;
+}
+
+.size-grid .size-grid-color-inner {
   display: flex;
   align-items: center;
   gap: 12px;
-  min-width: 180px;
 }
 
 .size-grid .size-grid-thumb {
