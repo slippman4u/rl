@@ -746,3 +746,56 @@ html.ss-tray-open {
   overflow: visible !important;
   position: static !important;
 }
+
+/* confirmation dialog (sits on the page body, outside the block) */
+.ss-dialog {
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px;
+  border: 0;
+  background: #fff;
+  color: #0d1b3a;
+  box-shadow: 0 20px 60px rgb(0 0 0 / 25%);
+}
+
+.ss-dialog::backdrop {
+  background: rgb(13 27 58 / 45%);
+}
+
+.ss-dialog h3 {
+  margin: 0 0 8px;
+  font-size: 2.4rem;
+  font-weight: 300;
+  line-height: 1.2;
+}
+
+.ss-dialog p {
+  margin: 0 0 24px;
+  font-size: 1.5rem;
+}
+
+.ss-dialog .ss-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.ss-dialog .ss-dialog-actions button {
+  min-width: 0;
+  margin: 0;
+  padding: 12px 28px;
+  border: 1px solid #0d1b3a;
+  border-radius: 0;
+  box-shadow: none;
+  font: inherit;
+  cursor: pointer;
+}
+
+.ss-dialog .ss-dialog-cancel {
+  background: transparent;
+  color: #0d1b3a;
+}
+
+.ss-dialog .ss-dialog-ok {
+  background: #0d1b3a;
+  color: #fff;
+}
