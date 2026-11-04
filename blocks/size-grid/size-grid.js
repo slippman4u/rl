@@ -18,6 +18,9 @@ const SIZE_ORDER = ['XXS', 'XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL', 'XXXL', '3XL
 // Fixed swatch colors. A color whose name contains the word on the left gets the hex on the right.
 // Add a line to cover a new color.
 const COLOR_MAP = {
+  khaki: '#C4B289', // Montana Khaki
+  nutmeg: '#81422C', // Nutmeg Brown
+  nugmeg: '#81422C', // in case the product name is spelled this way
   cream: '#f3ead7',
   black: '#111111',
   navy: '#1b2a49',
