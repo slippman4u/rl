@@ -95,7 +95,9 @@ export default async function decorate(block) {
   label.textContent = 'Paste from your spreadsheet';
   const area = document.createElement('textarea');
   area.rows = 2;
-  area.placeholder = 'Copy a row of quantities (S, M, L, XL, XXL) from Excel and paste here, e.g. 0 1 1 1 4';
+  const sizeNames = [...table.querySelectorAll('thead .size-grid-size')].map((th) => th.textContent.trim());
+  const example = ['5', '10', '20', '20', '10', '5', '5', '5'].slice(0, sizeNames.length).join(' ');
+  area.placeholder = `Copy a row of quantities (${sizeNames.join(', ')}) from Excel and paste here, e.g. ${example}`;
   label.append(area);
   wrap.append(label);
   block.querySelector('.size-grid-scroll')?.before(wrap);
