@@ -1,5 +1,4 @@
-import * as pdpApi from '@dropins/storefront-pdp/api.js';
-import '../../scripts/initializers/pdp.js';
+import { CS_FETCH_GRAPHQL } from '../../scripts/commerce.js';
 
 /*
  * SKU search (demo mock-up): paste a list of SKUs or import a CSV, and the page pulls up the
@@ -77,7 +76,7 @@ const IMAGE_OVERRIDES = {
 async function loadImages() {
   const out = { ...IMAGE_OVERRIDES };
   try {
-    const { data } = await pdpApi.fetchGraphQl(
+    const { data } = await CS_FETCH_GRAPHQL.fetchGraphQl(
       `query GET_IMAGES($skus: [String]!) {
         products(skus: $skus) {
           sku
