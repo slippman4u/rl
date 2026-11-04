@@ -737,3 +737,12 @@ html.ss-tray-open {
   color: #1d5a1f;
   font-size: 1.1rem;
 }
+
+/* the filter panel always grows to show every facet: no inner scrolling, no cropping */
+.sku-search .sku-search-facets,
+.sku-search aside.sku-search-facets {
+  height: auto !important;
+  max-height: none !important;
+  overflow: visible !important;
+  position: static !important;
+}
