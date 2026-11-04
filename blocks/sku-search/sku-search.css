@@ -182,8 +182,7 @@
 }
 
 .sku-search .sku-search-facets {
-  max-height: 85vh;
-  overflow-y: auto;
+  min-width: 0;
   padding: 14px;
   background: #fff;
   border: 1px solid var(--ss-line);
@@ -553,9 +552,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  .sku-search .sku-search-facets {
-    max-height: none;
-  }
 }
 
 .sku-search .sku-search-tile.is-clickable {
@@ -682,4 +678,62 @@ html.ss-tray-open {
   .ss-tray {
     transition: none;
   }
+}
+
+/* variant cards and add to cart */
+.sku-search .sku-search-variant {
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.sku-search .sku-search-buy {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.sku-search .sku-search-qty {
+  width: 54px;
+  box-sizing: border-box;
+  padding: 6px;
+  border: 1px solid var(--ss-navy);
+  border-radius: 0;
+  background: #fff;
+  font: inherit;
+  font-size: 1.2rem;
+  text-align: center;
+}
+
+.sku-search .sku-search-addcart {
+  min-width: 0;
+  margin: 0;
+  padding: 6px 12px;
+  border: 1px solid var(--ss-navy);
+  border-radius: 0;
+  background: var(--ss-navy);
+  color: #fff;
+  font: inherit;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.sku-search .sku-search-addcart.is-outline {
+  background: #fff;
+  color: var(--ss-navy);
+}
+
+.sku-search .sku-search-addcart:disabled {
+  opacity: 0.5;
+  cursor: wait;
+}
+
+.sku-search .sku-search-buynote {
+  flex-basis: 100%;
+  color: #1d5a1f;
+  font-size: 1.1rem;
 }
