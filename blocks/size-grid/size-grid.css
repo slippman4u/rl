@@ -72,11 +72,30 @@
 
 .size-grid .size-grid-qty {
   width: 72px;
-  padding: 8px;
-  text-align: right;
+  padding: 8px 0;
+  box-sizing: border-box;
+  text-align: center;
   font: inherit;
   border: 1px solid #b9b6b1;
   background: #fff;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.size-grid .size-grid-qty::-webkit-outer-spin-button,
+.size-grid .size-grid-qty::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.size-grid table {
+  table-layout: fixed;
+}
+
+.size-grid th.size-grid-color,
+.size-grid .size-grid-corner,
+.size-grid .size-grid-footer th {
+  width: 22%;
 }
 
 .size-grid .size-grid-total {
