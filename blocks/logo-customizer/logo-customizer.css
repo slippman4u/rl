@@ -146,6 +146,14 @@
   padding: 2px 0;
 }
 
+.logo-customizer .lc-diag {
+  margin: 12px 0 0;
+  padding: 8px;
+  background: #f0efed;
+  font-size: 1.1rem;
+  white-space: pre-wrap;
+}
+
 .logo-customizer .lc-total {
   margin-top: 6px;
   padding-top: 6px;
@@ -157,4 +165,47 @@
   padding-top: 6px;
   border-top: 1px solid var(--lc-navy);
   font-size: 1.6rem;
+}
+
+/* ---------- shirt preview ---------- */
+.logo-customizer .lc-stage {
+  margin: 0 0 14px;
+  padding: 10px;
+  background: #f4f3f1;
+}
+
+.logo-customizer .lc-tabs {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.logo-customizer .lc-tab {
+  min-width: 0;
+  margin: 0;
+  padding: 4px 16px;
+  border: 1px solid var(--lc-navy);
+  border-radius: 0;
+  background: #fff;
+  color: var(--lc-navy);
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.logo-customizer .lc-tab.is-on {
+  background: var(--lc-navy);
+  color: #fff;
+}
+
+.logo-customizer .lc-shirt {
+  display: flex;
+  justify-content: center;
+}
+
+.logo-customizer .lc-svg {
+  width: 100%;
+  max-width: 340px;
+  height: auto;
 }
