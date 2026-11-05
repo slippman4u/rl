@@ -509,7 +509,10 @@ export default async function decorate(block) {
     if (!area) return;
     area.querySelectorAll('label, legend, span, p, div').forEach((n) => {
       if (n.closest('.logo-customizer') || n.childElementCount > 1) return;
-      if (!mine.has(norm(n.textContent))) return;
+      // hide listed placements, and any leftover "<Placement> - Logo" / "<Placement> - Color" option
+      // (for example sleeves removed from the table but still in the admin)
+      const label = norm(n.textContent);
+      if (!mine.has(label) && !/ - (logo|color)$/.test(label)) return;
       let box = n.parentElement;
       while (box && box !== area && controls(box) < 1) box = box.parentElement;
       if (!box || box === area) return;
