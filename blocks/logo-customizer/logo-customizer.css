@@ -168,20 +168,20 @@
 }
 
 /* ---------- shirt preview ---------- */
-.logo-customizer .lc-stage {
+.lc-stage {
   margin: 0 0 14px;
   padding: 10px;
   background: #f4f3f1;
 }
 
-.logo-customizer .lc-tabs {
+.lc-tabs {
   display: flex;
   justify-content: center;
   gap: 6px;
   margin-bottom: 8px;
 }
 
-.logo-customizer .lc-tab {
+.lc-tab {
   min-width: 0;
   margin: 0;
   padding: 4px 16px;
@@ -194,18 +194,26 @@
   cursor: pointer;
 }
 
-.logo-customizer .lc-tab.is-on {
+.lc-tab.is-on {
   background: var(--lc-navy);
   color: #fff;
 }
 
-.logo-customizer .lc-shirt {
+.lc-shirt {
   display: flex;
   justify-content: center;
 }
 
-.logo-customizer .lc-svg {
+.lc-svg {
   width: 100%;
   max-width: 340px;
   height: auto;
+}
+
+.lc-stage.lc-in-gallery {
+  margin: 0;
+}
+
+.lc-stage.lc-in-gallery .lc-svg {
+  max-width: 100%;
 }
