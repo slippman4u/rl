@@ -2,7 +2,15 @@
   --lc-navy: #0d1b3a;
   --lc-line: #e3e1de;
 
-  margin: 24px 0;
+  /* fill the whole column: the product page would otherwise shrink this to fit its contents */
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-width: min(100%, 380px);
+  max-width: none;
+  align-self: stretch;
+  grid-column: 1 / -1;
+  margin: 8px 0 20px;
   padding: 16px;
   border: 1px solid var(--lc-line);
   background: #fff;
@@ -13,12 +21,23 @@
   margin: 0 0 4px;
   font-size: 2rem;
   font-weight: 300;
+  line-height: 1.3;
 }
 
 .logo-customizer .lc-sub {
   margin: 0 0 12px;
   color: #5b5b5b;
   font-size: 1.3rem;
+  line-height: 1.5;
+}
+
+.logo-customizer .lc-name,
+.logo-customizer .lc-price {
+  line-height: 1.3;
+}
+
+.logo-customizer .lc-price {
+  white-space: nowrap;
 }
 
 .logo-customizer .lc-row {
