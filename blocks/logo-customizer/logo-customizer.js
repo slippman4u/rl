@@ -287,6 +287,21 @@ export default async function decorate(block) {
   const options$ = document.querySelector('.product-details__options');
   if (options$) options$.after(block);
 
+  // put the shirt preview where the product image normally is, and hide the default image
+  const mountStage = () => {
+    const gallery = document.querySelector('.product-details__gallery');
+    if (!gallery) return;
+    Array.from(gallery.children).forEach((c) => {
+      if (c !== stage) { c.hidden = true; c.style.display = 'none'; }
+    });
+    if (stage.parentElement !== gallery) gallery.append(stage);
+    stage.classList.add('lc-in-gallery');
+  };
+  mountStage();
+  const galleryEl = document.querySelector('.product-details__gallery');
+  if (galleryEl) new MutationObserver(mountStage).observe(galleryEl, { childList: true });
+  [300, 1200, 3000].forEach((ms) => setTimeout(mountStage, ms));
+
   const complete = (pl) => state[pl.name].on && state[pl.name].logo && state[pl.name].color;
 
   /** Which base shirt is selected on the product (black, white or red). */
