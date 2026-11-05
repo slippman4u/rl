@@ -270,21 +270,35 @@ export default async function decorate(block) {
   }
 
   // hide the plain dropdowns Commerce draws for these options: this picker replaces them
+  // Find each of our options by its label, then hide just that one field (label + dropdown).
+  // Color and Size keep their dropdowns.
+  const mine = new Set();
+  placements.forEach((pl) => { mine.add(norm(`${pl.name} - Logo`)); mine.add(norm(`${pl.name} - Color`)); });
+  const controls = (node) => node.querySelectorAll('select, input, textarea, [role="combobox"], [role="listbox"]').length;
+
   function hideNative() {
     const area = document.querySelector('.product-details__options');
     if (!area) return;
-    const mine = new Set();
-    placements.forEach((pl) => { mine.add(norm(`${pl.name} - Logo`)); mine.add(norm(`${pl.name} - Color`)); });
-    area.querySelectorAll('label, legend, span, p').forEach((n) => {
-      if (n.closest('.logo-customizer') || !mine.has(norm(n.textContent))) return;
-      let box = n;
-      while (box.parentElement && box.parentElement !== area) box = box.parentElement;
-      if (box !== area) box.hidden = true;
+    area.querySelectorAll('label, legend, span, p, div').forEach((n) => {
+      if (n.closest('.logo-customizer') || n.childElementCount > 1) return;
+      if (!mine.has(norm(n.textContent))) return;
+      // start at the label's wrapper, then climb while the parent holds the same one control
+      let box = n.parentElement;
+      while (box && box !== area && controls(box) < 1) box = box.parentElement;
+      if (!box || box === area) return;
+      const count = controls(box);
+      while (box.parentElement && box.parentElement !== area && controls(box.parentElement) === count) {
+        box = box.parentElement;
+      }
+      box.hidden = true;
+      box.style.display = 'none';
     });
   }
-  if (document.querySelector('.product-details__options')) {
+  const optionsArea = document.querySelector('.product-details__options');
+  if (optionsArea) {
     hideNative();
-    new MutationObserver(hideNative).observe(document.querySelector('.product-details__options'), { childList: true, subtree: true });
+    new MutationObserver(hideNative).observe(optionsArea, { childList: true, subtree: true });
+    [300, 1200, 3000].forEach((ms) => setTimeout(hideNative, ms)); // for fields that draw late
   }
 
   events.on('pdp/values', paintSummary, { eager: true });
