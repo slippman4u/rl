@@ -1,0 +1,134 @@
+.logo-customizer {
+  --lc-navy: #0d1b3a;
+  --lc-line: #e3e1de;
+
+  margin: 24px 0;
+  padding: 16px;
+  border: 1px solid var(--lc-line);
+  background: #fff;
+  color: var(--lc-navy);
+}
+
+.logo-customizer .lc-title {
+  margin: 0 0 4px;
+  font-size: 2rem;
+  font-weight: 300;
+}
+
+.logo-customizer .lc-sub {
+  margin: 0 0 12px;
+  color: #5b5b5b;
+  font-size: 1.3rem;
+}
+
+.logo-customizer .lc-row {
+  border-top: 1px solid var(--lc-line);
+}
+
+.logo-customizer .lc-top {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 0;
+  font-size: 1.4rem;
+  cursor: pointer;
+}
+
+.logo-customizer .lc-name {
+  flex: 1;
+  font-weight: 600;
+}
+
+.logo-customizer .lc-price {
+  color: #5b5b5b;
+  font-size: 1.3rem;
+}
+
+.logo-customizer .lc-body {
+  padding: 0 0 14px 28px;
+}
+
+.logo-customizer .lc-tiles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.logo-customizer .lc-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  width: 84px;
+  margin: 0;
+  padding: 8px 4px;
+  border: 1px solid #b9b6b1;
+  border-radius: 0;
+  background: #fff;
+  color: var(--lc-navy);
+  font: inherit;
+  font-size: 1.2rem;
+  cursor: pointer;
+}
+
+.logo-customizer .lc-tile.is-picked {
+  border-color: var(--lc-navy);
+  box-shadow: 0 0 0 1px var(--lc-navy);
+}
+
+.logo-customizer .lc-tile img,
+.logo-customizer .lc-shape {
+  width: 44px;
+  height: 44px;
+  object-fit: contain;
+}
+
+.logo-customizer .lc-colors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.logo-customizer .lc-swatch {
+  width: 26px;
+  min-width: 0;
+  height: 26px;
+  margin: 0;
+  padding: 0;
+  border: 1px solid #b9b6b1;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.logo-customizer .lc-swatch.is-picked {
+  box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--lc-navy);
+}
+
+.logo-customizer .lc-muted {
+  margin: 0;
+  color: #6b6b6b;
+  font-size: 1.3rem;
+}
+
+.logo-customizer .lc-summary {
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--lc-navy);
+  font-size: 1.4rem;
+}
+
+.logo-customizer .lc-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 2px 0;
+}
+
+.logo-customizer .lc-total {
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--lc-line);
+}
