@@ -185,9 +185,11 @@ export default async function decorate(block) {
       );
       summary.append(row);
     });
-    const total = el('div', 'lc-line lc-total');
-    total.append(el('span', '', `Customization per unit (${qty} unit${qty === 1 ? '' : 's'})`), el('strong', '', `+${money(per)} · +${money(per * qty)}`));
-    summary.append(total);
+    const perLine = el('div', 'lc-line lc-total');
+    perLine.append(el('span', '', 'Customization per unit'), el('span', '', `+${money(per)} / unit`));
+    const total = el('div', 'lc-line lc-grand');
+    total.append(el('span', '', `Total customization (${qty} unit${qty === 1 ? '' : 's'})`), el('strong', '', `+${money(per * qty)}`));
+    summary.append(perLine, total);
     if (debug && !Object.values(wired).some((w) => w.logo)) {
       summary.append(el('p', 'lc-muted', 'Preview only: the matching customizable options were not found on this product, so the price is not added to the cart.'));
     }
