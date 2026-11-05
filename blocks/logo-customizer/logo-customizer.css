@@ -151,3 +151,10 @@
   padding-top: 6px;
   border-top: 1px solid var(--lc-line);
 }
+
+.logo-customizer .lc-grand {
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px solid var(--lc-navy);
+  font-size: 1.6rem;
+}
