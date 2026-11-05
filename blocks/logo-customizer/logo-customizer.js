@@ -364,8 +364,16 @@ export default async function decorate(block) {
   function applyToProduct() {
     const picked = [];
     placements.forEach((pl) => {
-      if (!complete(pl)) return;
       const w = wired[pl.name];
+      if (!complete(pl)) {
+        // an unused placement gets the option's "None" value (if the admin has one), so every
+        // option always has a value and the product page does not hold back Add to Cart
+        [w.logo, w.color].forEach((o) => {
+          const none = choices(o).find((c) => norm(c.label || c.title) === 'none');
+          if (none) picked.push(none.id);
+        });
+        return;
+      }
       const logoItem = choices(w.logo).find((c) => norm(c.label || c.title) === norm(state[pl.name].logo));
       const colorItem = choices(w.color).find((c) => norm(c.label || c.title) === norm(state[pl.name].color));
       if (logoItem) picked.push(logoItem.id);
@@ -546,5 +554,6 @@ export default async function decorate(block) {
   paint();
   paintSummary();
   paintPreview();
+  applyToProduct(); // starts every unused placement on its "None" value, if the admin has one
   paintDiag();
 }
